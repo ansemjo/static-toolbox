@@ -7,6 +7,9 @@ gpg: build.sh
 		 && docker cp $$ID:/usr/local/bin/gpg gpg; \
 	echo "tidy up ...";	docker rm -f $$ID
 
+gpg.lz: gpg
+	lzip -k $<
+
 .PHONY: pull
 pull:
 	docker pull $(IMAGE)
