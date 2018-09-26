@@ -4,8 +4,8 @@ gpg: build.sh
 	ID=$$(docker create -it $(IMAGE) ash /build.sh) \
 		 && docker cp build.sh $$ID:/build.sh \
 		 && docker start -ai $$ID \
-		 && docker cp $$ID:/usr/local/bin/gpg gpg \
-		 && docker rm -f $$ID
+		 && docker cp $$ID:/usr/local/bin/gpg gpg; \
+	echo "tidy up ...";	docker rm -f $$ID
 
 .PHONY: pull
 pull:
