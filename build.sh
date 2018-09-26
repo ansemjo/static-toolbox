@@ -12,21 +12,28 @@ apk add --no-cache \
 mkdir /build
 cd /build
 
-download() {
-  base="https://gnupg.org/ftp/gcrypt"
-  file=$1
-  wget "$base/$file" "$base/$file.sig"
+# download gnupg packages
+gnupgdl() {
+  ftp="https://gnupg.org/ftp/gcrypt"
+  pkg=$1; ver=$2;
+  wget \
+    "$ftp/$pkg/$pkg-$ver.tar.bz2" \
+    "$ftp/$pkg/$pkg-$ver.tar.bz2.sig"
 }
 
 # download files
-download "/gnupg/gnupg-2.2.10.tar.bz2"
-download "/libgpg-error/libgpg-error-1.32.tar.bz2"
-download "/libgcrypt/libgcrypt-1.8.3.tar.bz2"
-download "/libksba/libksba-1.3.5.tar.bz2"
-download "/libassuan/libassuan-2.5.1.tar.bz2"
-download "/ntbtls/ntbtls-0.1.2.tar.bz2"
-download "/npth/npth-1.6.tar.bz2"
-wget https://www.sqlite.org/2018/sqlite-autoconf-3250200.tar.gz
+gnupgdl gnupg         2.2.10
+gnupgdl libgpg-error  1.32
+gnupgdl libgcrypt     1.8.3
+gnupgdl libksba       1.3.5
+gnupgdl libassuan     2.5.1
+gnupgdl ntbtls        0.1.2
+gnupgdl npth          1.6
+
+# download sqlite
+SQLITE_LINK="https://www.sqlite.org/2018/sqlite-autoconf-3250200.tar.gz"
+SQLITE_SHA1="aedfbdc14eb700099434d6a743135743cff47393"
+wget "$SQLITE_LINK"
 
 # import gpg keys and trust them
 gpg --import <<"GPGKEYS"
@@ -86,41 +93,44 @@ Z0f1NpFYaIEsD0JwdOs7XD7158Gc52Bq8Pmd2ue8Pnn9jGeG4vIDrRHdM4c=
 -----END PGP PUBLIC KEY BLOCK-----
 GPGKEYS
 
+# set ownertrust to ultimate
 printf '%s:6:\n' \
   D8692123C4065DEA5E0F3AB5249B39D24F25E3B6 \
   031EC2536E580D8EA286A9F22071B08A33BD3F06 \
   | gpg --import-ownertrust
 
-# verify signatures
+# verify signatures on gnupg packages
 for s in *.sig; do
   gpg --verify "$s"
   rm -f "$s"
 done
 
 # verify hash on sqlite
-echo "aedfbdc14eb700099434d6a743135743cff47393  sqlite-autoconf-3250200.tar.gz" | sha1sum -c
+echo "$SQLITE_SHA1  $(basename "$SQLITE_LINK")" | sha1sum -c
 
-# export packages
-for t in *.tar*; do
+# extract packages
+for t in *.tar.*; do
   tar xf "$t"
 done
 
-# compile
+# compile with config options
 compile() {
   export LDFLAGS="-static -pie"
   package=$1; shift 1;
   (cd "$package"* && ./configure $@ && make -j$(nproc) && make install)
 }
 
-compile "sqlite-autoconf"
-compile "libgpg-error"
-compile "libassuan"
-compile "libgcrypt"
-compile "libksba"
-compile "npth"
-compile "ntbtls"
+# compile libraries in correct order
+compile sqlite-autoconf
+compile libgpg-error
+compile libassuan
+compile libgcrypt
+compile libksba
+compile npth
+compile ntbtls
 
-compile "gnupg" \
+# compile gpg binary
+compile gnupg \
   --disable-gpgsm \
   --disable-scdaemon \
   --enable-symcryptrun \
