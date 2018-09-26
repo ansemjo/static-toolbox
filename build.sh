@@ -3,7 +3,10 @@
 set -e
 
 # install requirements
-apk add --no-cache zlib-dev gnupg build-base
+apk add --no-cache \
+  gnupg \
+  build-base \
+  zlib-dev
 
 # switch to build directory
 mkdir /build
@@ -23,6 +26,7 @@ download "/libksba/libksba-1.3.5.tar.bz2"
 download "/libassuan/libassuan-2.5.1.tar.bz2"
 download "/ntbtls/ntbtls-0.1.2.tar.bz2"
 download "/npth/npth-1.6.tar.bz2"
+wget https://www.sqlite.org/2018/sqlite-autoconf-3250200.tar.gz
 
 # import gpg keys and trust them
 gpg --import <<"GPGKEYS"
@@ -93,6 +97,9 @@ for s in *.sig; do
   rm -f "$s"
 done
 
+# verify hash on sqlite
+echo "aedfbdc14eb700099434d6a743135743cff47393  sqlite-autoconf-3250200.tar.gz" | sha1sum -c
+
 # export packages
 for t in *.tar*; do
   tar xf "$t"
@@ -100,15 +107,32 @@ done
 
 # compile
 compile() {
-  LDFLAGS="-static -pie"
+  export LDFLAGS="-static -pie"
   package=$1; shift 1;
-  (cd "$package" && ./configure $@ && make LDFLAGS="$LDFLAGS" && make install)
+  (cd "$package"* && ./configure $@ && make -j$(nproc) && make install)
 }
 
-compile "libgpg-error-1.32"
-compile "libassuan-2.5.1"
-compile "libgcrypt-1.8.3"
-compile "libksba-1.3.5"
-compile "npth-1.6"
-compile "ntbtls-0.1.2"
-compile "gnupg-2.2.10"
+compile "sqlite-autoconf"
+compile "libgpg-error"
+compile "libassuan"
+compile "libgcrypt"
+compile "libksba"
+compile "npth"
+compile "ntbtls"
+
+compile "gnupg" \
+  --disable-gpgsm \
+  --disable-scdaemon \
+  --enable-symcryptrun \
+  --enable-large-secmem \
+  --enable-tofu \
+  --disable-photo-viewers \
+  --disable-gpg-idea \
+  --disable-gpg-cast5 \
+  --disable-gpg-blowfish \
+  --disable-gpg-twofish \
+  --disable-gpg-camellia128 \
+  --disable-gpg-camellia192 \
+  --disable-gpg-camellia256 \
+  --disable-gpg-md5 \
+  --disable-gpg-rmd160
