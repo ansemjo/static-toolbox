@@ -7,7 +7,7 @@ Requirements:
 
 ## compilation
 
-Pull the latest alpine image:
+Pull the latest [alpine](https://hub.docker.com/_/alpine/) image:
 
     make pull
 
