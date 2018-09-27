@@ -7,8 +7,10 @@ gpg: build.sh
 		 && docker cp $$ID:/usr/local/bin/gpg gpg; \
 	echo "tidy up ...";	docker rm -f $$ID
 
-gpg.lz: gpg
-	lzip -k $<
+.PHONY: release
+release: gpg
+	version=$$(./$< --version | sed -n 's/^gpg (GnuPG) //p') && \
+	lzip -c $< > $<-$$version.lz
 
 .PHONY: pull
 pull:
