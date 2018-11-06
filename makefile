@@ -1,17 +1,18 @@
+
+# container image
 IMAGE := alpine:latest
 
-gpg: build.sh
-	ID=$$(docker create -it $(IMAGE) ash /build.sh) \
-		 && docker cp build.sh $$ID:/build.sh \
-		 && docker start -ai $$ID \
-		 && docker cp $$ID:/usr/local/bin/gpg gpg; \
-	echo "tidy up ...";	docker rm -f $$ID
+# container runtime
+RUNTIME := podman
+
+fdisk: build.sh
+	$(RUNTIME) run --rm -it -v $$PWD:/rundir -w /rundir $(IMAGE) ash build.sh
 
 .PHONY: release
-release: gpg
-	version=$$(./$< --version | sed -n 's/^gpg (GnuPG) //p') && \
-	lzip -c $< > $<-$$version.lz
+release: fdisk
+	version=$$(./$< --version | sed -n 's/.* \([0-9.]*\)$$/\1/'p) && \
+	cp -vf $< $<-$$version
 
 .PHONY: pull
 pull:
-	docker pull $(IMAGE)
+	$(RUNTIME) pull $(IMAGE)

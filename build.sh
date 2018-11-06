@@ -2,147 +2,128 @@
 
 set -e
 
+# save original rundir
+RUNDIR=$PWD
+
 # install requirements
 apk add --no-cache \
   gnupg \
   build-base \
-  zlib-dev
+  linux-headers \
+  upx
 
 # switch to build directory
-mkdir /build
+mkdir -p /build
 cd /build
 
-# download gnupg packages
-gnupgdl() {
-  ftp="https://gnupg.org/ftp/gcrypt"
-  pkg=$1; ver=$2;
-  wget \
-    "$ftp/$pkg/$pkg-$ver.tar.bz2" \
-    "$ftp/$pkg/$pkg-$ver.tar.bz2.sig"
+# download packages
+download() {
+  mirror="https://mirrors.edge.kernel.org/pub/linux"
+  cat=$1; pkg=$2; ver=$3;
+  get() {
+    rm -f "$(basename "$1")"
+    wget "$1"
+  }
+  get "$mirror/$cat/$pkg/v$ver/$pkg-$ver.tar.gz"
+  get "$mirror/$cat/$pkg/v$ver/$pkg-$ver.tar.sign"
 }
 
 # download files
-gnupgdl gnupg         2.2.10
-gnupgdl libgpg-error  1.32
-gnupgdl libgcrypt     1.8.3
-gnupgdl libksba       1.3.5
-gnupgdl libassuan     2.5.1
-gnupgdl ntbtls        0.1.2
-gnupgdl npth          1.6
-
-# download sqlite
-SQLITE_LINK="https://www.sqlite.org/2018/sqlite-autoconf-3250200.tar.gz"
-SQLITE_SHA1="aedfbdc14eb700099434d6a743135743cff47393"
-wget "$SQLITE_LINK"
+download utils util-linux 2.33
 
 # import gpg keys and trust them
 gpg --import <<"GPGKEYS"
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
-mQENBE0ti4EBCACqGtKlX9jI/enhlBdy2cyQP6Q7JoyxtaG6/ckAKWHYrqFTQk3I
-Ue8TuDrGT742XFncG9PoMBfJDUNltIPgKFn8E9tYQqAOlpSA25bOb30cA2ADkrjg
-jvDAH8cZ+fkIayWtObTxwqLfPivjFxEM//IdShFFVQj+QHmXYBJggWyEIil8Bje7
-KRw6B5ucs4qSzp5VH4CqDr9PDnLD8lBGHk0x8jpwh4V/yEODJKATY0Vj00793L8u
-qA35ZiyczUvvJSLYvf7STO943GswkxdAfqxXbYifiK2gjE/7SAmB+2jFxsonUDOB
-1BAY5s3FKqrkaxZr3BBjeuGGoCuiSX/cXRIhABEBAAG0Fldlcm5lciBLb2NoIChk
-aXN0IHNpZymJAT4EEwECACgFAk0ti4ECGwMFCRDdnwIGCwkIBwMCBhUIAgkKCwQW
-AgMBAh4BAheAAAoJECSbOdJPJeO2PlMIAJxPtFXf5yozPpFjRbSkSdjsk9eru05s
-hKZOAKw3RUePTU80SRLPdg4AH+vkm1JMWFFpwvHlgfxqnE9rp13o7L/4UwNUwqH8
-5zCwu7SHz9cX3d4UUwzcP6qQP4BQEH9/xlpQS9eTK9b2RMyggqwd/J8mxjvoWzL8
-Klf/wl6jXHn/yP92xG9/YA86lNOL1N3/PhlZzLuJ6bdD9WzsEp/+kh3UDfjkIrOc
-WkqwupB+d01R4bHPu9tvXy8Xut8Sok2zku2xVkEOsV2TXHbwuHO2AGC5pWDX6wgC
-E4F5XeCB/0ovao2/bk22w1TxzP6PMxo6sLkmaF6D0frhM2bl4C/uSsq5AQ0ETS2L
-gQEIAKHwucgbaRj0V7Ht0FnM6RmbqwZ7IFV2lR+YN1gkZaWRRCaJoPEZFKhhPEBX
-1bDVwr/iTPaPPEtpi7oQoHk65yeLrhtOmXXpNVkV/5WQjAJIrWn+JQ3z/ZejxHUL
-hzKsGg5FC6pRYcEyzRXHtv4BO9kBIKNVirZjEkQG4BnIrQgl6e2YFa47GNMqcQH7
-nJdwG1cGQOZOIDQQM41gBzwoSrStMA6DjHkukFegKfcSbSLArBtYNAwTwmW7RqOM
-EJwlo0+NYx2Yn75x66bYwdlsP0FLOgez/O/IxoPRxXr0l4e+uj6dFHqvBi04dx6J
-sPmXEyeAyLiCWSh7Rwq8uIhBUBUAEQEAAYkBJQQYAQIADwUCTS2LgQIbIAUJEN2f
-AgAKCRAkmznSTyXjtrsSCACRNgfGkD0OqOiwYo1/+KyWnrQLusVvSYOw8hN66geU
-3BO8iQ0Koy+m0QKY1kWjaHwewpg8ZebY4E2sHbNIC9Spyiyz29sAJ2invf4/4Mep
-TgpxNiw4+XmykCkN1AfVhvMTQXMzRbO5ZwRtPpjsMr1j5vX1s6U3/RxSAItpAkCu
-1GGTTOH0r12Ochc/um+QGAyO6WUj/IiZ1MX7toXW0SCo8DSl8z5Q7KmJWF6TQLK1
-Lku4bIVG1Huwo1/0WHc2vCad5BxHjgoy8TsKLTmvYQZWtnjWvQGV2UOABYWcacut
-ZXQQ2PPCIY7LlpuS/45CXWbT5Y+mxY3y7dbz4aF+8uyCmQENBFRQOyMBCADmEHA3
-0Xc6op/72ZcJdQMriVvnAyN22L3rEbTiACfvBajs6fpzme2uJlC5F1HkYdx3Dvdc
-LoIV6Ed6j95JViJaoE0EB8T1TNuQRL5xj7jAPOpVpyqErF3vReYdCDIrumlEb8zC
-QvVTICsIYYAo3oxX/Z/M7ogZDDeOe1G57f/Y8YacZqKw0AqW+20dZn3W7Lgpjl8E
-zX25AKBl3Hi/z+s/T7JCqxZPAlQq/KbHkYh81oIm+AX6/5o+vCynEEx/2OkdeoNe
-eHgujwL8axAwPoYKVV9COy+/NQcofZ6gvig1+S75RrkG4AdiL64C7OpX1N2kX08K
-lAzI9+65lyUw8t0zABEBAAG0Mk5JSUJFIFl1dGFrYSAoR251UEcgUmVsZWFzZSBL
-ZXkpIDxnbmlpYmVAZnNpai5vcmc+iQE8BBMBCAAmAhsDBQsHCAkDBBUICQoFFgID
-AQACHgECF4AFAlgPFFkFCQtLkDYACgkQIHGwijO9Pwa8bwgAwEiUbP2+hhxJJcB1
-A66/PaAzaQ6O8wfM3pWVL1U/ToiOdPPYOd6MVnAubEnDx7yZmNSjSPDba6jUdERC
-EOud7dLUhrM8x5NQJQ3OlYUzFc1zpIDKvD1qlZryCi4ZRYm/cc7BWzwQUDYT1R20
-Mna4bsxj/54Lkr9p44DK51kRu9LyuBnKlMWsG0Fw0pRZmHPsVGfrcfESZgsTenoj
-X1kNetzVZNrMXajPXzPKbpy5RGvrBpFt1J6ZROyGkucoIFlfMnzZtcGBc2d92Zze
-C1LbhmYzdl8r+tjO0QOSJOSzZHWDAPB/lG0Olp/ksPa58RJ1su5P7xuUCWxxuBgs
-FzAOq7kBDQRUUDsjAQgAveAlrjBy5j9Qe6BcVNBYyr9w+kU6S0i6gv56kVnilXZU
-nXUeC5zv6/WoUbBoHpABFcng9OEigA+4NzljIVrxLCummIJs3NHCyQiUU7C1vl+5
-EVqN9ylACiKSmDvFRfIhK1no2o76OVIDd8tVf2p6pQVOOQ2pS5P5ruiVzq+re7vN
-/iLHE6xUE5Fte8DsaHOovcwzlNRaFmRcjVPocaTwhp3X50tuas2hKW9as8WKB6cr
-bQpBl+Ed7Il+oAJESyD4bGCuLGYoQWYUwYB3QFWEmJAqyoUTVqEm916VIXU+ZfPL
-j6M8MV67l5s5Olgr+mXQiftKxkocCY1NY+oPhZLJPQARAQABiQElBBgBCAAPAhsM
-BQJYDxRGBQkLS5AjAAoJECBxsIozvT8GCg0H/R10NUW+J3gv7P/70X8KqRLGE6hi
-4HfzvHf9Aax6IxNXeosonWSBl+NEoJqtTj1GRPRrVuZdlrsI8nIayMkkfDZ0PIfX
-DdGoGIy36ft7CRRmERrC9iexJiVT1HevoB3Kti+fs4Zt3vfGmksTJUuUBnBPSMg7
-XTXk1Acmt5IOpbWs0qPc7cxlep+fOT9lIkkJy9X7L4pOYkJA/JOg3MoJoQZ8X258
-uYz2lez03KccGPJOoxyC/GdeOBmB2WG7hzELsB9+e70YL6tHqXYfuycSZrQ7UvIK
-Z0f1NpFYaIEsD0JwdOs7XD7158Gc52Bq8Pmd2ue8Pnn9jGeG4vIDrRHdM4c=
-=jIGA
+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
+oe7UZowk
+=a4fN
 -----END PGP PUBLIC KEY BLOCK-----
 GPGKEYS
 
 # set ownertrust to ultimate
 printf '%s:6:\n' \
-  D8692123C4065DEA5E0F3AB5249B39D24F25E3B6 \
-  031EC2536E580D8EA286A9F22071B08A33BD3F06 \
+  B0C64D14301CC6EFAEDF60E4E4B71D5EEC39C284 \
   | gpg --import-ownertrust
 
-# verify signatures on gnupg packages
-for s in *.sig; do
+# verify signatures
+for g in *.gz; do
+  gunzip -f $g
+done
+for s in *.sign; do
   gpg --verify "$s"
   rm -f "$s"
 done
 
-# verify hash on sqlite
-echo "$SQLITE_SHA1  $(basename "$SQLITE_LINK")" | sha1sum -c
-
 # extract packages
-for t in *.tar.*; do
+for t in *.tar; do
   tar xf "$t"
 done
 
 # compile with config options
 compile() {
-  export LDFLAGS="-static -pie"
-  package=$1; shift 1;
-  (cd "$package"* && ./configure $@ && make -j$(nproc) && make install)
+  export CFLAGS="-static -s"
+  export LDFLAGS="-static -s -pie"
+  package=$1; target=$2; shift 2;
+  (cd "$package"* && ./configure $@ && make -j$(nproc) $target)
 }
 
-# compile libraries in correct order
-compile sqlite-autoconf
-compile libgpg-error
-compile libassuan
-compile libgcrypt
-compile libksba
-compile npth
-compile ntbtls
+# compile binary
+export CFLAGS="-static -s"
+export LDFLAGS="-static -s -pie"
+cd util-linux*
+./configure \
+  --enable-static \
+  --enable-static-programs=fdisk \
+  --disable-pylibmount \
+  --without-python
+make -j$(nproc) fdisk.static
+upx fdisk.static
 
-# compile gpg binary
-compile gnupg \
-  --disable-gpgsm \
-  --disable-scdaemon \
-  --enable-symcryptrun \
-  --enable-large-secmem \
-  --enable-tofu \
-  --disable-photo-viewers \
-  --disable-gpg-idea \
-  --disable-gpg-cast5 \
-  --disable-gpg-blowfish \
-  --disable-gpg-twofish \
-  --disable-gpg-camellia128 \
-  --disable-gpg-camellia192 \
-  --disable-gpg-camellia256 \
-  --disable-gpg-md5 \
-  --disable-gpg-rmd160
+# copy binary to output
+cp -vf fdisk.static $RUNDIR/fdisk

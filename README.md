@@ -1,9 +1,9 @@
-# static gpg binary
+# static fdisk binary
 
 Requirements:
 
-* Docker
-* GNU make
+* container runtime: `podman` or `docker`
+* `make`
 
 ## compilation
 
@@ -11,19 +11,7 @@ Pull the latest [alpine](https://hub.docker.com/_/alpine/) image:
 
     make pull
 
-Compile `gpg`:
+Compile `fdisk`:
 
-    make gpg
-    ./gpg --version
+    make fdisk
 
-## configuration / updates
-
-The compiled packages are all defined in [build.sh](build.sh) and the
-configuration options for gnupg are given at the very bottom of the file.
-
-If you want to use updated packages, you'll need to find and replace the
-download versions in `build.sh`. Find updates here:
-
-* [GnuPG Downloads](https://gnupg.org/download/)
-* [SQLite Downloads](https://www.sqlite.org/download.html?)
-  (use the `autoconf` packages)
