@@ -5,6 +5,9 @@ set -e
 # save original rundir
 RUNDIR=$PWD
 
+# set version
+VERSION=${VERSION:-2.33}
+
 # install requirements
 apk add --no-cache \
   gnupg \
@@ -28,7 +31,7 @@ download() {
 }
 
 # download files
-download utils util-linux 2.33
+download utils util-linux $VERSION
 
 # import gpg keys and trust them
 gpg --import <<"GPGKEYS"
@@ -124,4 +127,4 @@ cd util-linux*
 make -j$(nproc) fdisk.static
 
 # copy binary to output
-cp -vf fdisk.static $RUNDIR/fdisk
+cp -vf fdisk.static $RUNDIR/fdisk-$VERSION

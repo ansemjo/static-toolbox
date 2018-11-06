@@ -1,17 +1,18 @@
 
-# container image
-IMAGE := alpine:latest
-
 # container runtime
 RUNTIME := podman
+IMAGE := alpine:latest
 
-fdisk: build.sh
-	$(RUNTIME) run --rm -it -v $$PWD:/rundir -w /rundir $(IMAGE) ash build.sh
+# fdisk version to build
+VERSION := 2.33
 
-.PHONY: release
-release: fdisk
-	version=$$(./$< --version | sed -n 's/.* \([0-9.]*\)$$/\1/'p) && \
-	cp -vf $< $<-$$version
+.PHONY: fdisk
+fdisk: fdisk-$(VERSION)
+fdisk-$(VERSION): build.sh
+	$(RUNTIME) run --rm -it \
+		-v $$PWD:/rundir -w /rundir \
+		-e VERSION=$(VERSION) \
+		$(IMAGE) ash build.sh
 
 .PHONY: pull
 pull:
