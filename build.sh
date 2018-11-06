@@ -9,8 +9,7 @@ RUNDIR=$PWD
 apk add --no-cache \
   gnupg \
   build-base \
-  linux-headers \
-  upx
+  linux-headers
 
 # switch to build directory
 mkdir -p /build
@@ -123,7 +122,6 @@ cd util-linux*
   --disable-pylibmount \
   --without-python
 make -j$(nproc) fdisk.static
-upx fdisk.static
 
 # copy binary to output
 cp -vf fdisk.static $RUNDIR/fdisk
