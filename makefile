@@ -6,9 +6,9 @@ IMAGE := alpine:latest
 # fdisk version to build
 VERSION := 2.33
 
-.PHONY: fdisk
-fdisk: fdisk-$(VERSION)
-fdisk-$(VERSION): build.sh
+.PHONY: build
+build: fdisk-$(VERSION) sfdisk-$(VERSION)
+fdisk-% sfdisk-%: build.sh
 	$(RUNTIME) run --rm -it \
 		-v $$PWD:/rundir -w /rundir \
 		-e VERSION=$(VERSION) \

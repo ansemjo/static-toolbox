@@ -121,10 +121,11 @@ export LDFLAGS="-static -s -pie"
 cd util-linux*
 ./configure \
   --enable-static \
-  --enable-static-programs=fdisk \
+  --enable-static-programs=fdisk,sfdisk \
   --disable-pylibmount \
   --without-python
-make -j$(nproc) fdisk.static
+make -j$(nproc) fdisk.static sfdisk.static
 
-# copy binary to output
-cp -vf fdisk.static $RUNDIR/fdisk-$VERSION
+# copy binaries to output
+cp -vf  fdisk.static $RUNDIR/fdisk-$VERSION
+cp -vf sfdisk.static $RUNDIR/sfdisk-$VERSION
