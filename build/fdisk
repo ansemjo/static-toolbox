@@ -1,9 +1,5 @@
 #!/usr/bin/env ash
-
-set -e
-
-# save original rundir
-RUNDIR=$PWD
+set -ex
 
 # set version
 VERSION=${VERSION:-2.33}
@@ -126,6 +122,7 @@ cd util-linux*
   --without-python
 make -j$(nproc) fdisk.static sfdisk.static
 
-# copy binaries to output
-cp -vf  fdisk.static $RUNDIR/fdisk-$VERSION
-cp -vf sfdisk.static $RUNDIR/sfdisk-$VERSION
+# copy binaries to output directory
+mkdir -p $EXPORTDIR
+cp -vf  fdisk.static $EXPORTDIR/fdisk
+cp -vf sfdisk.static $EXPORTDIR/sfdisk
