@@ -13,6 +13,8 @@ build-%: build/%
 	$(RUNTIME) run -it --name $@-$(TIMESTAMP) \
 		-v $(realpath $<):/build.sh:ro \
 		-e EXPORTDIR=/export -w /build \
+		-e LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" \
+		-e CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s" \
 		$(IMAGE) ash /build.sh
 	$(RUNTIME) export $@-$(TIMESTAMP) \
 		| tar xv --strip-components 1 --wildcards 'export/*'

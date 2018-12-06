@@ -114,7 +114,6 @@ done
 
 # compile with config options
 compile() {
-  export LDFLAGS="-static -pie"
   package=$1; shift 1;
   (cd "$package"* && ./configure $@ && make -j$(nproc) && make install)
 }
