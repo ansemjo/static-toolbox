@@ -14,10 +14,10 @@ cd /build
 # download gnupg packages
 gnupgdl() {
   ftp="https://gnupg.org/ftp/gcrypt"
-  pkg=$1; ver=$2;
+  pkg=$1; ver=$2; z=${3:-bz2};
   wget \
-    "$ftp/$pkg/$pkg-$ver.tar.bz2" \
-    "$ftp/$pkg/$pkg-$ver.tar.bz2.sig"
+    "$ftp/$pkg/$pkg-$ver.tar.$z" \
+    "$ftp/$pkg/$pkg-$ver.tar.$z.sig"
 }
 
 # download files
@@ -28,6 +28,7 @@ gnupgdl libksba       1.3.5
 gnupgdl libassuan     2.5.1
 gnupgdl ntbtls        0.1.2
 gnupgdl npth          1.6
+gnupgdl bzip2         1.0.6-g10  gz
 
 # download sqlite
 SQLITE_LINK="https://www.sqlite.org/2018/sqlite-autoconf-3250200.tar.gz"
@@ -87,8 +88,16 @@ BQJYDxRGBQkLS5AjAAoJECBxsIozvT8GCg0H/R10NUW+J3gv7P/70X8KqRLGE6hi
 DdGoGIy36ft7CRRmERrC9iexJiVT1HevoB3Kti+fs4Zt3vfGmksTJUuUBnBPSMg7
 XTXk1Acmt5IOpbWs0qPc7cxlep+fOT9lIkkJy9X7L4pOYkJA/JOg3MoJoQZ8X258
 uYz2lez03KccGPJOoxyC/GdeOBmB2WG7hzELsB9+e70YL6tHqXYfuycSZrQ7UvIK
-Z0f1NpFYaIEsD0JwdOs7XD7158Gc52Bq8Pmd2ue8Pnn9jGeG4vIDrRHdM4c=
-=jIGA
+Z0f1NpFYaIEsD0JwdOs7XD7158Gc52Bq8Pmd2ue8Pnn9jGeG4vIDrRHdM4eYjgRD
+t/rHAQQA0JkZeitcyQMqk2xGd/5mGoc4+YNwQo8OSmVwIvY8UAI3tBorhF6ha9ni
+aqZU4vdldTnXMU0j1oPckAhOgRPaOvaEZhYUTF0F/15piAF5dkZQ6dsmXVUkPNYM
+ZTpkc2nA+IACBiOmygGBkLFuXvHRW1i6SNz28iRH/UZcYLi/2iEAIIFWUJm0Jldl
+cm5lciBLb2NoIChkaXN0IHNpZykgPGRkOWpuQGdudS5vcmc+iLwEEwECACYCGwMG
+CwkIBwMCBBUCCAMEFgIDAQIeAQIXgAUCTS2MtwUJClROYQAKCRBTtiDQHODGMPB4
+A/0U1DJR9LbkWuBs8Ko6KJoKLMVI6iYNJBhAtm3dxWeUxA16eYDWW/b9Lk5KnjtS
+WuGOeqa7MCsXnkyHkO88KE9IcM3mFnhfFN2qagd/nRchl9MPsdOgf/ug7j72Alv2
+V8s28R10HTjfwySe/omXWwK3qn8ou6N7ID+EwCV7i2e2uw==
+=TIuU
 -----END PGP PUBLIC KEY BLOCK-----
 GPGKEYS
 
@@ -96,6 +105,7 @@ GPGKEYS
 printf '%s:6:\n' \
   D8692123C4065DEA5E0F3AB5249B39D24F25E3B6 \
   031EC2536E580D8EA286A9F22071B08A33BD3F06 \
+  7B96D396E6471601754BE4DB53B620D01CE0C630 \
   | gpg --import-ownertrust
 
 # verify signatures on gnupg packages
@@ -115,10 +125,11 @@ done
 # compile with config options
 compile() {
   package=$1; shift 1;
-  (cd "$package"* && ./configure $@ && make -j$(nproc) && make install)
+  (cd "$package"* && { if [[ -f configure ]]; then ./configure $@; else true; fi; } && make -j$(nproc) && make install)
 }
 
 # compile libraries in correct order
+compile bzip2
 compile sqlite-autoconf
 compile libgpg-error
 compile libassuan
