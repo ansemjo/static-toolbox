@@ -19,5 +19,5 @@ build-%: build/%
 	$(RUNTIME) rm $@-$(TIMESTAMP)
 
 # generate target list from available scripts
-$(shell find build/ -type f -printf '%f\n'):
+$(shell find -L build/ -type f -printf '%f\n'):
 	make build-$@
