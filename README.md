@@ -6,7 +6,7 @@ Build scripts to compile various static binaries inside a container.
 
 * container runtime: [`podman`](https://podman.io/) or
   [`docker`](https://www.docker.com/)
-* GNU `make`, `find`, `tar`
+* GNU `awk`, `find`, `make`, `tar`
 
 ## USAGE
 
