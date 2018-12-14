@@ -1,3 +1,4 @@
-fdisk
-sfdisk
-gpg
+*
+!README.md
+!makefile
+!build/

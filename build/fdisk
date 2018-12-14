@@ -1,6 +1,9 @@
 #!/usr/bin/env ash
 set -ex
 
+# base image
+# FROM: alpine:latest
+
 # set version
 VERSION=${VERSION:-2.33}
 

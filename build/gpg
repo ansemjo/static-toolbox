@@ -1,6 +1,9 @@
 #!/usr/bin/env ash
 set -ex
 
+# base image
+# FROM: alpine:latest
+
 # install requirements
 apk add --no-cache \
   gnupg \
