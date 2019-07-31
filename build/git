@@ -36,6 +36,10 @@ RUN for pkg in *.xz; do \
 # extract packages
 RUN for tar in *.tar; do tar xf "${tar}" --no-same-owner; done
 
+# compilation environment
+ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s"
+ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+
 # compile binary
 RUN cd git-* &&\
     make configure &&\
