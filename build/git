@@ -20,7 +20,7 @@ RUN export LATEST=$(cat latest) &&\
   wget "https://mirrors.edge.kernel.org/pub/software/scm/git/${LATEST}.tar.sign"
 
 # import gpg keys and trust them
-COPY gpgkey-96E07AF25771955980DAD10020D04E5A713660A7.asc /gpgkey
+COPY git.keys /gpgkey
 RUN gpg --import </gpgkey
 RUN printf '%s:6:\n' \
   96E07AF25771955980DAD10020D04E5A713660A7 \
