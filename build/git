@@ -1,3 +1,8 @@
+# git - free and open source distributed version control
+# This build file always builds the latest version, which
+# at the time of this writing is '2.22.0'.
+# https://git-scm.com/
+
 # base image
 FROM debian:stable as build
 

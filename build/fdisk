@@ -1,7 +1,13 @@
+# fdisk, sfdisk - utility that provides disk partitioning functions
+# These utilities are built from the util-linux set of utilities and
+# the script can build many other utilities with minimal changes.
+# https://en.wikipedia.org/wiki/Util-linux
+
+# base image
 FROM alpine:latest as build
 
 # set version
-ENV VERSION=2.33
+ENV VERSION=2.34
 
 # install requirements
 RUN apk add --no-cache \
