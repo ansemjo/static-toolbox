@@ -19,8 +19,8 @@ RUN \
   wget "$MIRROR/utils/util-linux/v$VERSION/util-linux-$VERSION.tar.sign"
 
 # import gpg keys and trust them
-COPY gpgkey-E4B71D5EEC39C284.asc /tmp/gpgkey
-RUN gpg --import </tmp/gpgkey
+COPY gpgkey-B0C64D14301CC6EFAEDF60E4E4B71D5EEC39C284.asc /gpgkey
+RUN gpg --import </gpgkey
 RUN printf '%s:6:\n' \
   B0C64D14301CC6EFAEDF60E4E4B71D5EEC39C284 \
   | gpg --import-ownertrust
