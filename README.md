@@ -4,13 +4,13 @@ Build scripts to compile various static binaries inside a container.
 
 ## REQUIREMENTS
 
-* container runtime: [`podman`](https://podman.io/) or
-  [`docker`](https://www.docker.com/)
-* GNU `awk`, `find`, `make`, `tar`
+* [`img`](https://github.com/genuinetools/img/) - standalone, daemon-less,
+  unprivileged container image builder (minimum 4f50859d982711827f6f93fe992b66b9a15c9166)
+* GNU `make`, `find`
 
 ## USAGE
 
-Available build targets are given by the scripts in [`build/`](build/):
+Available build targets are given by the Dockerfiles in [`build/`](build/):
 
     make fdisk sfdisk
     make gpg
@@ -20,8 +20,7 @@ Available build targets are given by the scripts in [`build/`](build/):
 
 Add your own build scripts in `build/`:
 
-- define your base image with a comment: `# FROM: <baseimage>`
-- only the script itself is mounted in the container, supply everything inline
-- the working directory is `/build`
-- output files should be placed in `$EXPORTDIR/`
-- *ideally, the script is named after the compiled binary*
+- add a Dockerfile named like the binary you want to compile
+- use seperate `RUN` commands for better caching of steps
+- the `build/` directory will be the context, so you may add scripts and `COPY` them
+- use a final `FROM scratch` stage and only copy the output binary into this rootfs
