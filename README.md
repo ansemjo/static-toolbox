@@ -15,6 +15,7 @@ Available build targets are given by the Dockerfiles in [`build/`](build/):
     make fdisk sfdisk
     make gpg
     make git
+    make make
 
 ## ADD YOUR OWN
 

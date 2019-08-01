@@ -1,0 +1,56 @@
+# make - control the generation of executables and other files with rules
+# A very essential build tool. Here, make is used to make make.
+# https://www.gnu.org/software/make/
+
+# base image
+FROM alpine:latest as build
+
+# install requirements
+RUN apk add --no-cache \
+  gnupg \
+  build-base \
+  linux-headers
+
+# switch to build directory
+WORKDIR /build
+
+# set version
+ENV VERSION=4.2.1
+
+# download packages
+ENV MIRROR="https://ftp.halifax.rwth-aachen.de/gnu/"
+RUN \
+  wget "$MIRROR/make/make-4.2.1.tar.gz" && \
+  wget "$MIRROR/make/make-4.2.1.tar.gz.sig"
+
+# import gpg keys and trust them
+COPY make.keys /gpgkeys
+RUN gpg --import </gpgkeys
+RUN printf '%s:6:\n' \
+  6D4EEB02AD834703510B117680CB727A20C79BB2 \
+  3D2554F0A15338AB9AF1BB9D96B047156338B6D4 \
+  | gpg --import-ownertrust
+
+# verify signatures
+RUN for s in *.sig; do gpg --verify "$s"; rm -f "$s"; done
+
+# extract packages
+RUN for t in *.tar.gz; do tar xf "$t"; done
+
+# compilation environment
+ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
+ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+
+# compile binaries
+RUN cd make-$VERSION &&\
+  sed -i '211,217 d; 219,229 d; 232 d' glob/glob.c &&\
+  ./configure --prefix=/usr &&\
+  make -j$(nproc)
+
+# move to output directory
+WORKDIR /output
+RUN cp /build/make-$VERSION/make ./
+
+# copy binaries to new stage
+FROM scratch
+COPY --from=build /output /
