@@ -1,0 +1,58 @@
+# busybox - the swiss army knife of embedded linux
+# A binary which combines tiny versions of many common UNIX
+# utilities into a single executable. Different functions can
+# be accesses by symlinking it to different names.
+# https://busybox.net/about.html
+
+# base image
+FROM alpine:latest as build
+
+# install requirements
+RUN apk add --no-cache \
+  gnupg \
+  build-base \
+  linux-headers
+
+# switch to build directory
+WORKDIR /build
+
+# find latest version from downloads page
+RUN wget -O - https://busybox.net/downloads/ |\
+  sed -n 's/.*href="busybox-\([0-9.]\+\)\.tar\.[a-z0-9]\+".*/\1/p' |\
+  sort -V | tail -1 > latest
+
+# download sources
+RUN export VERSION=$(cat latest) && \
+  wget "https://busybox.net/downloads/busybox-$VERSION.tar.bz2" && \
+  wget "https://busybox.net/downloads/busybox-$VERSION.tar.bz2.sig" && \
+  ln -sf busybox-$VERSION latest
+
+# import gpg keys and trust them
+COPY busybox.keys /gpgkeys
+RUN gpg --import </gpgkeys
+RUN printf '%s:6:\n' \
+  AB07D806D2CE741FB886EE50B025BA8B59C36319 \
+  | gpg --import-ownertrust
+
+# verify signatures
+RUN for s in *.sig; do gpg --verify "$s"; rm -f "$s"; done
+
+# extract packages
+RUN for t in *.tar.*; do tar xf "$t"; done
+
+# compilation environment
+ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
+ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+
+# compile binaries
+RUN cd latest/ &&\
+  make defconfig &&\
+  make -j$(nproc)
+
+# move to output directory
+WORKDIR /output
+RUN cp /build/latest/busybox ./
+
+# copy binaries to new stage
+FROM scratch
+COPY --from=build /output /

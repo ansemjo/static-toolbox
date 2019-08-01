@@ -12,10 +12,12 @@ Build scripts to compile various static binaries inside a container.
 
 Available build targets are given by the Dockerfiles in [`build/`](build/):
 
-    make fdisk sfdisk
-    make gpg
-    make git
-    make make
+* `make fdisk`
+* `make gpg`
+* `make git`
+* `make make`
+* `make zstd`
+* `make busybox`
 
 ## ADD YOUR OWN
 
