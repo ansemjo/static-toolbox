@@ -1,0 +1,45 @@
+# zstd - a fast lossless compresiion algorithm and data compression tool
+# Wicked fast compression from Facebook and it bundles many other compression
+# libraries so it can be used as an all-in-one compression tool.
+# https://github.com/facebook/zstd/
+
+# base image
+FROM alpine:latest as build
+
+# install requirements
+RUN apk add --no-cache \
+  gnupg \
+  build-base \
+  linux-headers
+
+# switch to build directory
+WORKDIR /build
+
+# set version
+ENV VERSION=1.4.2
+ENV CHECKSUM=12730983b521f9a604c6789140fcb94fadf9a3ca99199765e33c56eb65b643c9
+
+# download packages
+RUN wget "https://github.com/facebook/zstd/releases/download/v1.4.2/zstd-1.4.2.tar.gz"
+
+# verify checksum on archive
+RUN echo "$CHECKSUM  zstd-$VERSION.tar.gz" | sha256sum -c
+
+# extract packages
+RUN for t in *.tar.gz; do tar xf "$t"; done
+
+# compilation environment
+ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
+ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+
+# compile binary
+RUN cd zstd-$VERSION &&\
+  make -j$(nproc)
+
+# move to output directory
+WORKDIR /output
+RUN cp /build/zstd-$VERSION/zstd ./
+
+# copy binaries to new stage
+FROM scratch
+COPY --from=build /output /
