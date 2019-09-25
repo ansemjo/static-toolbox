@@ -4,6 +4,7 @@ all: $(TARGETS)
 
 # generate target list from available scripts
 TARGETS = $(shell find -L build/ -type f ! -name '*.keys' -printf '%f\n')
+.PHONY: $(TARGETS)
 $(TARGETS):
 	make build-$@
 

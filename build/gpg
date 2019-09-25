@@ -31,6 +31,7 @@ gnupgdl libksba       1.3.5           \n\
 gnupgdl libassuan     2.5.3           \n\
 gnupgdl ntbtls        0.1.2           \n\
 gnupgdl npth          1.6             \n\
+gnupgdl pinentry      1.1.0           \n\
 gnupgdl bzip2         1.0.6-g10  gz   \n\
 '
 
@@ -76,8 +77,13 @@ RUN compile libgcrypt
 RUN compile libksba
 RUN compile npth
 RUN compile ntbtls
+# compile pinentry helper
+RUN compile pinentry \
+  --enable-pinentry-tty
 # compile gpg binary
 RUN compile gnupg \
+  --prefix=/usr \
+  --localstatedir=/var \
   --disable-gpgsm \
   --disable-scdaemon \
   --enable-symcryptrun \
@@ -96,4 +102,5 @@ RUN compile gnupg \
 
 # copy binary to empty stage
 FROM scratch
-COPY --from=build /usr/local/bin/gpg /
+COPY --from=build /usr/local/bin/pinentry-tty /
+COPY --from=build /usr/bin/gpg /usr/bin/gpg-agent /usr/bin/gpgv /
