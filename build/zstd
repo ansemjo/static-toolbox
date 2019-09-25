@@ -10,36 +10,27 @@ FROM alpine:latest as build
 RUN apk add --no-cache \
   gnupg \
   build-base \
-  linux-headers
+  linux-headers \
+  curl jq tar
 
-# switch to build directory
+# download and verify the latest version
+WORKDIR /download
+RUN curl -H "Accept: application/vnd.github.v3+json" \
+  "https://api.github.com/repos/facebook/zstd/releases/latest" \
+  | jq -r .assets[].browser_download_url \
+  | grep '\.tar\.gz\(\.sha256\)\?$' \
+  | xargs wget \
+  && sha256sum -c *.sha256
+
+# extract packages in build directory
 WORKDIR /build
-
-# set version
-ENV VERSION=1.4.2
-ENV CHECKSUM=12730983b521f9a604c6789140fcb94fadf9a3ca99199765e33c56eb65b643c9
-
-# download packages
-RUN wget "https://github.com/facebook/zstd/releases/download/v1.4.2/zstd-1.4.2.tar.gz"
-
-# verify checksum on archive
-RUN echo "$CHECKSUM  zstd-$VERSION.tar.gz" | sha256sum -c
-
-# extract packages
-RUN for t in *.tar.gz; do tar xf "$t"; done
-
-# compilation environment
-ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
-ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+RUN tar xf /download/*.tar.gz --strip-components=1
 
 # compile binary
-RUN cd zstd-$VERSION &&\
-  make -j$(nproc)
-
-# move to output directory
-WORKDIR /output
-RUN cp /build/zstd-$VERSION/zstd ./
+ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
+ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+RUN make -j$(nproc)
 
 # copy binaries to new stage
 FROM scratch
-COPY --from=build /output /
+COPY --from=build /build/zstd /
