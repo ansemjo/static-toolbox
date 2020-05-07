@@ -6,56 +6,47 @@
 # base image
 FROM alpine:latest as build
 
-# set version
-ENV VERSION=2.34
-
 # install requirements
 RUN apk add --no-cache \
   gnupg \
   build-base \
-  linux-headers
-
-# switch to build directory
-WORKDIR /build
-
-# download packages
-ENV MIRROR="https://mirrors.edge.kernel.org/pub/linux"
-RUN \
-  wget "$MIRROR/utils/util-linux/v$VERSION/util-linux-$VERSION.tar.gz" && \
-  wget "$MIRROR/utils/util-linux/v$VERSION/util-linux-$VERSION.tar.sign"
+  linux-headers \
+  curl tar
 
 # import gpg keys and trust them
+WORKDIR /download
 COPY fdisk.keys /gpgkey
 RUN gpg --import </gpgkey
 RUN printf '%s:6:\n' \
   B0C64D14301CC6EFAEDF60E4E4B71D5EEC39C284 \
   | gpg --import-ownertrust
 
-# verify signatures
-RUN for g in *.gz; do gunzip -f $g; done
-RUN for s in *.sign; do gpg --verify "$s"; rm -f "$s"; done
+# download and verify latest package
+ENV MIRROR="https://mirrors.edge.kernel.org/pub/linux"
+RUN curl -s "$MIRROR/utils/util-linux/" \
+  | sed -n 's/.*href="v\([0-9.]\+\)\/".*/\1/p' \
+  | sort -rV | head -1 > VERSION
+RUN export VERSION=$(cat VERSION) \
+  && wget "$MIRROR/utils/util-linux/v$VERSION/util-linux-$VERSION.tar.gz" \
+  && wget "$MIRROR/utils/util-linux/v$VERSION/util-linux-$VERSION.tar.sign" \
+  && gunzip -f *.tar.gz \
+  && gpg --verify *.sign
 
 # extract packages
-RUN for t in *.tar; do tar xf "$t"; done
-
-# compilation environment
-ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
-ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+WORKDIR /build
+RUN tar xf /download/*.tar.gz --strip-components=1
 
 # compile binaries
-RUN cd util-linux-$VERSION &&\
-    ./configure \
+ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
+ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+RUN ./configure \
       --enable-static \
       --enable-static-programs=fdisk,sfdisk \
       --disable-pylibmount \
-      --without-python &&\
-    make -j$(nproc) fdisk.static sfdisk.static
-
-# move to output directory
-WORKDIR /output
-RUN cp /build/util-linux-$VERSION/fdisk.static  fdisk
-RUN cp /build/util-linux-$VERSION/sfdisk.static sfdisk
+      --without-python \
+  && make -j$(nproc) fdisk.static sfdisk.static
 
 # copy binaries to new stage
 FROM scratch
-COPY --from=build /output /
+COPY --from=build /build/fdisk.static /fdisk
+COPY --from=build /build/sfdisk.static /sfdisk
