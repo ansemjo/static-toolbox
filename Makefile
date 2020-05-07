@@ -10,4 +10,4 @@ $(TARGETS):
 # use genuinetools/img to build artifacts
 .PHONY: build-%
 build-%: build/%
-	img build -f $< build/ -o type=local,dest=./
+	DOCKER_BUILDKIT=1 docker build -f $< build/ -o type=local,dest=./

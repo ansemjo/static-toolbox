@@ -4,8 +4,7 @@ Build scripts to compile various static binaries inside a container.
 
 ## REQUIREMENTS
 
-* [`img`](https://github.com/genuinetools/img/) - standalone, daemon-less,
-  unprivileged container image builder (minimum 4f50859d982711827f6f93fe992b66b9a15c9166)
+* Docker with `DOCKER_BUILDKIT=1` support, i.e. 19.03+
 * GNU `make`, `find`
 
 ## USAGE
