@@ -1,9 +1,11 @@
+# generate target list from available scripts
+TARGETS = $(shell find -L build/ -type f ! -name '*.keys' -printf '%f\n')
+
 # build all available targets
 .PHONY: all
 all: $(TARGETS)
 
-# generate target list from available scripts
-TARGETS = $(shell find -L build/ -type f ! -name '*.keys' -printf '%f\n')
+# build a single target
 $(TARGETS):
 	make build-$@
 
