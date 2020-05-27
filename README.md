@@ -17,6 +17,7 @@ Available build targets are given by the Dockerfiles in [`build/`](build/):
 * `make make`
 * `make zstd`
 * `make busybox`
+* `make curl`
 
 ## ADD YOUR OWN
 
