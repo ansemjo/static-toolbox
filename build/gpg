@@ -29,22 +29,21 @@ RUN dl() { \
         "$MIRROR/$pkg/$pkg-$ver.tar.$z" \
         "$MIRROR/$pkg/$pkg-$ver.tar.$z.sig"; \
   } \
-  && dl  gnupg         2.2.17     bz2  \
-  && dl  libgpg-error  1.36       bz2  \
-  && dl  libgcrypt     1.8.4      bz2  \
-  && dl  libksba       1.3.5      bz2  \
+  && dl  gnupg         2.2.23     bz2  \
+  && dl  libgpg-error  1.39       bz2  \
+  && dl  libgcrypt     1.8.6      bz2  \
+  && dl  libksba       1.4.0      bz2  \
   && dl  libassuan     2.5.3      bz2  \
-  && dl  ntbtls        0.1.2      bz2  \
+  && dl  ntbtls        0.2.0      bz2  \
   && dl  npth          1.6        bz2  \
   && dl  pinentry      1.1.0      bz2  \
-  && dl  bzip2         1.0.6-g10  gz   \
   && for s in *.sig; do gpg --verify "$s"; done
 
 # download and verify sqlite sources
-ARG SQLITE_LINK="https://www.sqlite.org/2018/sqlite-autoconf-3250200.tar.gz"
-ARG SQLITE_SHA1="aedfbdc14eb700099434d6a743135743cff47393"
+ARG SQLITE_LINK="https://sqlite.org/2020/sqlite-autoconf-3330000.tar.gz"
+ARG SQLITE_SHA3="6e94e9453cedf8f2023e3923f856741d1e28a2271e9f93d24d95fa48870edaad"
 RUN wget "$SQLITE_LINK" \
-  && echo "$SQLITE_SHA1  $(basename "$SQLITE_LINK")" | sha1sum -c
+  && echo "$SQLITE_SHA3  $(basename "$SQLITE_LINK")" | sha3sum -a 256 -c
 
 # extract sources
 WORKDIR /build
@@ -60,7 +59,6 @@ package=$1; shift 1;\n\
 ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s"
 ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
 # compile libraries in correct order
-RUN compile bzip2
 RUN compile sqlite-autoconf
 RUN compile libgpg-error
 RUN compile libassuan
