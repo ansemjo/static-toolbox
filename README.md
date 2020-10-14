@@ -11,10 +11,10 @@ for a different architecture of course but most of the systems in question were
 `x86_64`, anyway.
 
 The scripts placed in `build/` are Dockerfiles that are built with the `builtkit`
-frontend. However, the end result is not a container image but an exported directory
-containing the binaries. The fact that everything is built inside a container means
-that you do not need to provide any specific build environment yourself – everything
-is downloaded for you.
+frontend. However, the end result is not a container image but a built binary that
+is saved in the base directory, which you can then copy where-ever you like.
+The fact that everything is built inside a container means that you do not need to
+provide any specific build environment – besides an installation of Docker.
 
 ## REQUIREMENTS
 
