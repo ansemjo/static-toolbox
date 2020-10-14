@@ -34,7 +34,7 @@ RUN export VERSION=$(cat VERSION) \
 
 # extract packages
 WORKDIR /build
-RUN tar xf /download/*.tar.gz --strip-components=1
+RUN tar xf /download/*.tar --strip-components=1
 
 # compile binaries
 ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
