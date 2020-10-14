@@ -4,7 +4,7 @@ TARGETS = $(shell find -L build/ -type f ! -name '*.keys' -printf '%f\n')
 # clean up built targets
 .PHONY: clean
 clean:
-	rm -fv $(addsuffix .tar.zst,$(TARGETS))
+	rm -fv $(addsuffix .tar.xz,$(TARGETS))
 	rm -fv $(TARGETS)
 
 # group: build all available targets
@@ -20,8 +20,8 @@ $(TARGETS):
 	make build-$@
 
 # export a buildstage sources tarball
-$(addsuffix .tar.zst,$(TARGETS)):
-	make sources-$(subst .tar.zst,,$@)
+$(addsuffix .tar.xz,$(TARGETS)):
+	make sources-$(subst .tar.xz,,$@)
 
 # use docker with buildkit to build artifacts
 .PHONY: build-%
@@ -31,4 +31,4 @@ build-%: build/%
 # export the finished build stage per target as source distribution
 .PHONY: sources-%
 sources-%: build/%
-	DOCKER_BUILDKIT=1 docker build -f $< build/ -o type=tar,dest=- --target build | zstd > $*.tar.zst
+	DOCKER_BUILDKIT=1 docker build -f $< build/ -o type=tar,dest=- --target build | xz > $*.tar.xz
