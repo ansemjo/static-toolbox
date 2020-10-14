@@ -10,14 +10,20 @@ FROM alpine:latest as build
 RUN apk add --no-cache gnupg build-base linux-headers curl jq tar # common base
 RUN apk add --no-cache ca-certificates openssl-libs-static openssl-dev
 
+# import gpg keys and trust them
+COPY curl.keys /gpgkeys
+RUN gpg --import </gpgkeys && printf '%s:6:\n' \
+  27EDEAF22F3ABCEB50DB9A125CC908FDB71E12C2 \
+  | gpg --import-ownertrust
+
 # download and verify latest sources
-# TODO: verify gpg signauture
 WORKDIR /download
 RUN curl -H "Accept: application/vnd.github.v3+json" \
   "https://api.github.com/repos/curl/curl/releases/latest" \
   | jq -r .assets[].browser_download_url \
   | grep '\.tar\.xz\(\.asc\)\?$' \
-  | xargs wget
+  | xargs wget \
+  && gpg --verify *.asc
 
 # extract sources
 WORKDIR /build
