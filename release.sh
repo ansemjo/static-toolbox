@@ -6,8 +6,8 @@ set -eu
 git clean -idx
 
 # compile all binaries
-#make all
-#make sources
+make all
+make sources
 
 # calculate checksums
 sha256sum $(ls | grep -vE '(build|Makefile|README.md|release.sh)') | tee CHECKSUMS.sha256

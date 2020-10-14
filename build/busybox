@@ -8,10 +8,7 @@
 FROM alpine:latest as build
 
 # install requirements
-RUN apk add --no-cache \
-  gnupg \
-  build-base \
-  linux-headers
+RUN apk add --no-cache gnupg build-base linux-headers curl jq tar # common base
 
 # switch to build directory
 WORKDIR /build

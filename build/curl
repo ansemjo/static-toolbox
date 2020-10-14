@@ -7,12 +7,8 @@
 FROM alpine:latest as build
 
 # install requirements
-RUN apk add --no-cache \
-  gnupg \
-  build-base \
-  linux-headers \
-  curl jq tar ca-certificates \
-  openssl-libs-static openssl-dev
+RUN apk add --no-cache gnupg build-base linux-headers curl jq tar # common base
+RUN apk add --no-cache ca-certificates openssl-libs-static openssl-dev
 
 # download and verify the latest version
 WORKDIR /download
