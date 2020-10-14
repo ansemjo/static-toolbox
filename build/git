@@ -9,52 +9,37 @@ FROM debian:stable as build
 # install requirements
 RUN apt-get update && apt-get install -y \
   dh-autoreconf libcurl4-gnutls-dev libexpat1-dev \
-  gettext libz-dev libssl-dev wget
-
-# switch to build directory
-WORKDIR /build
-
-# downlaod sha256sums and find latest version
-RUN wget -O - https://mirrors.edge.kernel.org/pub/software/scm/git/sha256sums.asc |\
-    awk '/git-[0-9.]+.*.tar.xz/{ print $2 }' - |\
-    sort -V | tail -1 | sed 's/\.tar.xz$//' > latest
-
-# download files
-RUN export LATEST=$(cat latest) &&\
-  wget "https://mirrors.edge.kernel.org/pub/software/scm/git/${LATEST}.tar.xz" &&\
-  wget "https://mirrors.edge.kernel.org/pub/software/scm/git/${LATEST}.tar.sign"
+  gettext libz-dev libssl-dev wget curl
 
 # import gpg keys and trust them
-COPY git.keys /gpgkey
-RUN gpg --import </gpgkey
-RUN printf '%s:6:\n' \
+COPY git.keys /gpgkeys
+RUN gpg --import </gpgkeys && printf '%s:6:\n' \
   96E07AF25771955980DAD10020D04E5A713660A7 \
   | gpg --import-ownertrust
 
-# verify signatures
-RUN for pkg in *.xz; do \
-      unxz "${pkg}"; \
-      gpg --verify "${pkg%.xz}.sign"; \
-      rm -f "${pkg%.xz}.sign"; \
-    done
+# download and verify latest sources
+WORKDIR /download
+ENV MIRROR "https://mirrors.edge.kernel.org/pub"
+RUN curl -s "$MIRROR/software/scm/git/sha256sums.asc" \
+  | awk '/git-[0-9.]+.*.tar.xz/{ print $2 }' - \
+  | sort -rV | head -1 | sed 's/\.tar.xz$//' > VERSION \
+  && export VERSION=$(cat VERSION) \
+  && wget "$MIRROR/software/scm/git/$VERSION.tar.xz" \
+  && wget "$MIRROR/software/scm/git/$VERSION.tar.sign" \
+  && xz -d *.tar.xz \
+  && gpg --verify *.sign
 
-# extract packages
-RUN for tar in *.tar; do tar xf "${tar}" --no-same-owner; done
+# extract sources
+WORKDIR /build
+RUN tar xf /download/*.tar --strip-components=1 --no-same-owner
 
-# compilation environment
+# compile binaries
 ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s"
 ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+RUN make configure \
+  && ./configure --prefix=/usr \
+  && make -j$(nproc) git
 
-# compile binary
-RUN cd git-* &&\
-    make configure &&\
-    ./configure --prefix=/usr &&\
-    make -j$(nproc) git
-
-# copy binaries to output directory
-WORKDIR /output
-RUN cp /build/git-*/git .
-
-# copy to an empty stage
+# copy binaries to a new stage
 FROM scratch
-COPY --from=build /output/git /
+COPY --from=build /build/git /

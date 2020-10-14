@@ -11,52 +11,44 @@ FROM alpine:latest as build
 RUN apk add --no-cache gnupg build-base linux-headers curl jq tar # common base
 RUN apk add --no-cache zlib-dev
 
-# switch to build directory
-WORKDIR /build
-
-# download gnupg packages
-RUN ash -c $'\n\
-gnupgdl() { \n\
-  ftp="https://gnupg.org/ftp/gcrypt" \n\
-  pkg=$1; ver=$2; z=${3:-bz2}; \n\
-  echo "ARGUMENTS: $@" \n\
-  wget \
-    "$ftp/$pkg/$pkg-$ver.tar.$z" \
-    "$ftp/$pkg/$pkg-$ver.tar.$z.sig" \n\
-} \n\
-gnupgdl gnupg         2.2.17          \n\
-gnupgdl libgpg-error  1.36            \n\
-gnupgdl libgcrypt     1.8.4           \n\
-gnupgdl libksba       1.3.5           \n\
-gnupgdl libassuan     2.5.3           \n\
-gnupgdl ntbtls        0.1.2           \n\
-gnupgdl npth          1.6             \n\
-gnupgdl pinentry      1.1.0           \n\
-gnupgdl bzip2         1.0.6-g10  gz   \n\
-'
-
-# download sqlite
-ENV SQLITE_LINK="https://www.sqlite.org/2018/sqlite-autoconf-3250200.tar.gz"
-ENV SQLITE_SHA1="aedfbdc14eb700099434d6a743135743cff47393"
-RUN wget "$SQLITE_LINK"
-
 # import gpg keys and trust them
 COPY gpg.keys /gpgkeys
-RUN gpg --import </gpgkeys
-RUN printf '%s:6:\n' \
+RUN gpg --import </gpgkeys && printf '%s:6:\n' \
   D8692123C4065DEA5E0F3AB5249B39D24F25E3B6 \
   031EC2536E580D8EA286A9F22071B08A33BD3F06 \
   7B96D396E6471601754BE4DB53B620D01CE0C630 \
   | gpg --import-ownertrust
 
-# verify signatures on gnupg packages
-RUN for s in *.sig; do gpg --verify "$s"; rm -f "$s"; done
+# download gnupg sources and verify their signatures
+WORKDIR /download
+RUN dl() { \
+      MIRROR="https://gnupg.org/ftp/gcrypt"; \
+      pkg=$1; ver=$2; z=$3; \
+      echo "ARGUMENTS: $@"; \
+      wget \
+        "$MIRROR/$pkg/$pkg-$ver.tar.$z" \
+        "$MIRROR/$pkg/$pkg-$ver.tar.$z.sig"; \
+  } \
+  && dl  gnupg         2.2.17     bz2  \
+  && dl  libgpg-error  1.36       bz2  \
+  && dl  libgcrypt     1.8.4      bz2  \
+  && dl  libksba       1.3.5      bz2  \
+  && dl  libassuan     2.5.3      bz2  \
+  && dl  ntbtls        0.1.2      bz2  \
+  && dl  npth          1.6        bz2  \
+  && dl  pinentry      1.1.0      bz2  \
+  && dl  bzip2         1.0.6-g10  gz   \
+  && for s in *.sig; do gpg --verify "$s"; done
 
-# verify hash on sqlite
-RUN echo "$SQLITE_SHA1  $(basename "$SQLITE_LINK")" | sha1sum -c
+# download and verify sqlite sources
+ARG SQLITE_LINK="https://www.sqlite.org/2018/sqlite-autoconf-3250200.tar.gz"
+ARG SQLITE_SHA1="aedfbdc14eb700099434d6a743135743cff47393"
+RUN wget "$SQLITE_LINK" \
+  && echo "$SQLITE_SHA1  $(basename "$SQLITE_LINK")" | sha1sum -c
 
-# extract packages
-RUN for t in *.tar.*; do tar xf "$t"; done
+# extract sources
+WORKDIR /build
+RUN for t in /download/*.tar.*; do tar xf "$t"; done
 
 # insert compilation helper
 RUN printf $'#/usr/bin/env ash\n\
@@ -67,7 +59,6 @@ package=$1; shift 1;\n\
 # compilation environment
 ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s"
 ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
-
 # compile libraries in correct order
 RUN compile bzip2
 RUN compile sqlite-autoconf
@@ -100,7 +91,7 @@ RUN compile gnupg \
   --disable-gpg-md5 \
   --disable-gpg-rmd160
 
-# copy binary to empty stage
+# copy binaries to new stage
 FROM scratch
 COPY --from=build /usr/local/bin/pinentry-tty /
 COPY --from=build /usr/bin/gpg /usr/bin/gpg-agent /usr/bin/gpgv /

@@ -10,25 +10,24 @@ FROM alpine:latest as build
 RUN apk add --no-cache gnupg build-base linux-headers curl jq tar # common base
 
 # import gpg keys and trust them
-WORKDIR /download
-COPY fdisk.keys /gpgkey
-RUN gpg --import </gpgkey
-RUN printf '%s:6:\n' \
+COPY fdisk.keys /gpgkeys
+RUN gpg --import </gpgkeys && printf '%s:6:\n' \
   B0C64D14301CC6EFAEDF60E4E4B71D5EEC39C284 \
   | gpg --import-ownertrust
 
-# download and verify latest package
-ENV MIRROR="https://mirrors.edge.kernel.org/pub/linux"
-RUN curl -s "$MIRROR/utils/util-linux/" \
+# download and verify latest sources
+WORKDIR /download
+ENV MIRROR="https://mirrors.edge.kernel.org/pub"
+RUN curl -s "$MIRROR/linux/utils/util-linux/" \
   | sed -n 's/.*href="v\([0-9.]\+\)\/".*/\1/p' \
-  | sort -rV | head -1 > VERSION
-RUN export VERSION=$(cat VERSION) \
-  && wget "$MIRROR/utils/util-linux/v$VERSION/util-linux-$VERSION.tar.gz" \
-  && wget "$MIRROR/utils/util-linux/v$VERSION/util-linux-$VERSION.tar.sign" \
-  && gunzip -f *.tar.gz \
+  | sort -rV | head -1 > VERSION \
+  && export VERSION=$(cat VERSION) \
+  && wget "$MIRROR/linux/utils/util-linux/v$VERSION/util-linux-$VERSION.tar.xz" \
+  && wget "$MIRROR/linux/utils/util-linux/v$VERSION/util-linux-$VERSION.tar.sign" \
+  && xz -d *.tar.xz \
   && gpg --verify *.sign
 
-# extract packages
+# extract sources
 WORKDIR /build
 RUN tar xf /download/*.tar --strip-components=1
 
