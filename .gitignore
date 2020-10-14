@@ -1,5 +1,6 @@
 *
 !README.md
-!makefile
+!Makefile
+!release.sh
 !*/
 !build/*
