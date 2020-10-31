@@ -1,0 +1,83 @@
+# rsync - fast and extraordinarily versatile file copying tool
+# It uses a delta-transfer algorithm and is commonly used for
+# bringing remote files into sync.
+# https://download.samba.org/pub/rsync/
+
+# TODO:
+#  - add support for ACLs
+#  - add support for IPv6
+#  - add support for xxHash
+
+# ---- USED AS LIBRARY DEPENDENCY HERE ----
+# TODO: use a preprocessor to paste zstd dockerfile here?
+# zstd - a fast lossless compresiion algorithm and data compression tool
+FROM alpine:latest as zstd
+
+# install requirements
+RUN apk add --no-cache gnupg build-base linux-headers curl jq tar # common base
+
+# download and verify the latest sources
+WORKDIR /download
+RUN curl -H "Accept: application/vnd.github.v3+json" \
+  "https://api.github.com/repos/facebook/zstd/releases/latest" \
+  | jq -r .assets[].browser_download_url \
+  | grep '\.tar\.gz\(\.sha256\)\?$' \
+  | xargs wget \
+  && sha256sum -c *.sha256
+
+# extract sources
+WORKDIR /build
+RUN tar xf /download/*.tar.gz --strip-components=1
+
+# compile binaries
+ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
+ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+RUN make -j$(nproc)
+RUN make -j$(nproc) install
+
+# ---- USED AS LIBRARY DEPENDENCY HERE ----
+
+# base image
+FROM alpine:latest as build
+
+# install requirements
+RUN apk add --no-cache gnupg build-base linux-headers curl jq tar # common base
+
+# import gpg keys and trust them
+COPY rsync.keys /gpgkeys
+RUN gpg --import </gpgkeys && printf '%s:6:\n' \
+  0048C8B026D4C96F0E589C2F6C859FB14B96A8C5 \
+  | gpg --import-ownertrust
+
+# download and verify latest sources
+WORKDIR /download
+ENV MIRROR="https://download.samba.org/pub/rsync/"
+RUN curl -s "$MIRROR/" \
+  | sed -n 's/.*href="rsync-\([0-9.]\+\)\.tar\.gz".*/\1/p' \
+  | sort -rV | head -1 > VERSION \
+  && export VERSION=$(cat VERSION) \
+  && wget "$MIRROR/rsync-$VERSION.tar.gz" \
+  && wget "$MIRROR/rsync-$VERSION.tar.gz.asc" \
+  && gpg --verify *.asc
+
+# extract sources
+WORKDIR /build
+RUN tar xf /download/*.tar.gz --strip-components=1
+
+# copy required libraries from other stages
+COPY --from=zstd /usr/local/lib/*       /usr/local/lib/
+COPY --from=zstd /usr/local/include/*   /usr/local/include/
+
+# compile binaries
+ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
+ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+RUN ./configure \
+    --disable-openssl \
+    --disable-lz4 \
+    --disable-xxhash \
+  && make -j$(nproc)
+
+# copy binaries to new stage
+FROM scratch
+COPY --from=build /build/rsync /
+
