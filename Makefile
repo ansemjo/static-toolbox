@@ -1,12 +1,6 @@
 # generate target list from available scripts
 TARGETS = $(shell find -L build/ -type f ! -name '*.keys' -printf '%f\n')
 
-# clean up built targets
-.PHONY: clean
-clean:
-	rm -fv $(addsuffix .tar.xz,$(TARGETS))
-	rm -fv $(TARGETS)
-
 # group: build all available targets
 .PHONY: all
 all: $(addprefix build-,$(TARGETS))
@@ -14,6 +8,12 @@ all: $(addprefix build-,$(TARGETS))
 # group: export all build sources
 .PHONY: sources
 sources: $(addprefix sources-,$(TARGETS))
+
+# clean up built targets
+.PHONY: clean
+clean:
+	rm -fv $(addsuffix .tar.xz,$(TARGETS))
+	rm -fv $(TARGETS)
 
 # build a single target
 $(TARGETS):
