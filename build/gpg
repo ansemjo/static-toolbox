@@ -8,7 +8,7 @@
 FROM alpine:latest as build
 
 # install requirements
-RUN apk add --no-cache gnupg build-base linux-headers curl jq tar # common base
+RUN apk add --no-cache gnupg build-base linux-headers curl jq tar xz # common base
 RUN apk add --no-cache zlib-dev
 
 # import gpg keys and trust them
