@@ -30,10 +30,10 @@ WORKDIR /build
 RUN tar xf /download/*.tar.gz --strip-components=1
 
 # compile binaries
-ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
-ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
-RUN make -j$(nproc)
-RUN make -j$(nproc) install
+# BUG?: using these explicit static flags leads to errors, zstd probably already adds its own?
+#ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s"
+#ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+RUN make -C lib/ -j$(nproc) install install-static
 
 # ---- USED AS LIBRARY DEPENDENCY HERE ----
 
