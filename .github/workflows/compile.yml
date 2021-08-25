@@ -1,0 +1,28 @@
+name: compile release
+
+on:
+  push:
+    branches: [ main,  devel ]
+  schedule:
+    - cron: "32 14 3 * *"
+
+jobs:
+  
+  build:
+    name: compile
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Compile release
+        run: bash release.sh
+
+      - name: Upload job artifact
+        uses: actions/upload-artifact@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          name: binaries-and-sources
+          path: compiled/*
+          retention-days: 60
