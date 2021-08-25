@@ -26,7 +26,7 @@ $(TARGETS):
 # use docker with buildkit to build artifacts
 .PHONY: build-%
 compiled/%: build/% compiled/
-	DOCKER_BUILDKIT=1 docker build -f $< build/ \
+	DOCKER_BUILDKIT=1 docker build -f $< build/ $(BUILDARGS) \
 		-o type=local,dest=compiled/ --target binary
 
 # list of source targets for completion
@@ -35,5 +35,5 @@ $(addsuffix -sources,$(TARGETS)):
 
 # export downloaded sources from build stage
 compiled/%-sources.tar: build/% compiled/
-	DOCKER_BUILDKIT=1 docker build -f $< build/ \
+	DOCKER_BUILDKIT=1 docker build -f $< build/ $(BUILDARGS) \
 		-o type=tar,dest=- --target sources > compiled/$*.tar

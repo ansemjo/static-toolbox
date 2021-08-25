@@ -84,7 +84,8 @@ RUN compile gnupg \
   --disable-gpg-camellia192 \
   --disable-gpg-camellia256 \
   --disable-gpg-md5 \
-  --disable-gpg-rmd160
+  --disable-gpg-rmd160 \
+  && (ldd /usr/bin/gpg && exit 1 || true)
 
 # copy sources to new stage
 FROM scratch as sources

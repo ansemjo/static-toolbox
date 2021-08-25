@@ -35,7 +35,8 @@ RUN tar xf /download/*.tar.bz2 --strip-components=1
 ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
 ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
 RUN make defconfig \
-  && make -j$(nproc)
+  && make -j$(nproc) \
+  && (ldd busybox && exit 1 || true)
 
 # copy sources to new stage
 FROM scratch as sources

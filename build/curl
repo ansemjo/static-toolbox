@@ -31,14 +31,17 @@ RUN tar xf /download/*.tar.xz --strip-components=1
 
 # compile binaries
 ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
-ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -static -s"
+ENV CPPFLAGS="-D_FORTIFY_SOURCE=2"
 ENV PKG_CONFIG="pkg-config --static"
 RUN ./configure \
       --with-ssl \
       --disable-shared \
       --enable-static \
+      --enable-manual \
       --without-libssh2 \
-  && make -j$(nproc) curl_LDFLAGS=-all-static
+  && make -j$(nproc) LDFLAGS=-all-static \
+  && (ldd src/curl && exit 1 || true)
 
 # copy sources to new stage
 FROM scratch as sources

@@ -38,7 +38,9 @@ RUN ./configure \
       --enable-static-programs=fdisk,sfdisk \
       --disable-pylibmount \
       --without-python \
-  && make -j$(nproc) fdisk.static sfdisk.static
+  && make -j$(nproc) fdisk.static sfdisk.static \
+  && (ldd fdisk.static && exit 1 || true) \
+  && (ldd sfdisk.static && exit 1 || true)
 
 # copy sources to new stage
 FROM scratch as sources
