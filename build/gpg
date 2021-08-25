@@ -86,7 +86,12 @@ RUN compile gnupg \
   --disable-gpg-md5 \
   --disable-gpg-rmd160
 
+# copy sources to new stage
+FROM scratch as sources
+COPY --from=build /download /
+COPY gpg /Dockerfile
+
 # copy binaries to new stage
-FROM scratch
+FROM scratch as binary
 COPY --from=build /usr/local/bin/pinentry-tty /
 COPY --from=build /usr/bin/gpg /usr/bin/gpg-agent /usr/bin/gpgv /

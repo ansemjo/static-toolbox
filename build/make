@@ -36,6 +36,11 @@ ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
 RUN ./configure --prefix=/usr \
   && make -j$(nproc)
 
+# copy sources to new stage
+FROM scratch as sources
+COPY --from=build /download /
+COPY make /Dockerfile
+
 # copy binaries to new stage
-FROM scratch
+FROM scratch as binary
 COPY --from=build /build/make /

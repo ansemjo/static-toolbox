@@ -26,12 +26,11 @@ RUN curl -s "$MIRROR/software/scm/git/sha256sums.asc" \
   && export VERSION=$(cat VERSION) \
   && wget "$MIRROR/software/scm/git/$VERSION.tar.xz" \
   && wget "$MIRROR/software/scm/git/$VERSION.tar.sign" \
-  && xz -d *.tar.xz \
-  && gpg --verify *.sign
+  && xz -dc *.tar.xz | gpg --verify *.sign -
 
 # extract sources
 WORKDIR /build
-RUN tar xf /download/*.tar --strip-components=1 --no-same-owner
+RUN tar xf /download/*.tar.xz --strip-components=1 --no-same-owner
 
 # compile binaries
 ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s"
@@ -40,6 +39,11 @@ RUN make configure \
   && ./configure --prefix=/usr \
   && make -j$(nproc) git
 
+# copy sources to new stage
+FROM scratch as sources
+COPY --from=build /download /
+COPY git /Dockerfile
+
 # copy binaries to a new stage
-FROM scratch
+FROM scratch as binary
 COPY --from=build /build/git /

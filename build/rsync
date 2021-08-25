@@ -77,7 +77,13 @@ RUN ./configure \
     --disable-xxhash \
   && make -j$(nproc)
 
+# copy sources to new stage
+FROM scratch as sources
+COPY --from=zstd  /download /
+COPY --from=build /download /
+COPY rsync /Dockerfile
+
 # copy binaries to new stage
-FROM scratch
+FROM scratch as binary
 COPY --from=build /build/rsync /
 

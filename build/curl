@@ -40,7 +40,12 @@ RUN ./configure \
       --without-libssh2 \
   && make -j$(nproc) curl_LDFLAGS=-all-static
 
+# copy sources to new stage
+FROM scratch as sources
+COPY --from=build /download /
+COPY curl /Dockerfile
+
 # copy binaries to new stage
-FROM scratch
+FROM scratch as binary
 COPY --from=build /build/src/curl /
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /
