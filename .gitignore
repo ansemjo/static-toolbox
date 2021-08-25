@@ -1,6 +1,1 @@
-*
-!README.md
-!Makefile
-!release.sh
-!*/
-!build/*
+compiled/

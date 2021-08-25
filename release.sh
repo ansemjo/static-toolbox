@@ -2,21 +2,21 @@
 # compile all binaries and package some metadata for publishing
 set -eu
 
-# clean directory
-git clean -idx
-
-# compile all binaries
+# (re)compile all binaries
+rm -rf compiled/
 make all
 make sources
 
 # calculate checksums
-sha256sum $(ls | grep -vE '(build|Makefile|README.md|release.sh)') | tee CHECKSUMS.sha256
+cd compiled/
+sha256sum * > CHECKSUMS
 
 # output versions to a text file
-for util in $(cd build/ && ls | grep -v '.keys'); do
-  case $util in
+for util in $(cd ../build/ && ls | grep -v '.keys'); do
+  version=$(case $util in
     busybox) ./$util | head -1;;
     zstd) ./zstd -V | sed 's/ \?\*\+ \?//g';;
     *) ./$util --version | head -1;;
-  esac
+  esac)
+  printf '%s\t%s\n' "$util" "$version"
 done | tee VERSIONS
