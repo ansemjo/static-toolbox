@@ -16,6 +16,13 @@ is saved in the `compiled/` directory, which you can then copy where-ever you li
 The fact that everything is built inside a container means that you do not need to
 provide any specific build environment – besides an installation of Docker.
 
+## DOWNLOAD
+
+The binaries are compiled in a GitHub workflow regularly. These precompiled binaries
+and all the downloaded sources that were used can be found in the
+[action artifacts](https://github.com/ansemjo/static-toolbox/actions)
+(click on a run and download the `binaries-and-sources` archive form the artifacts).
+
 ## REQUIREMENTS
 
 * Docker with `DOCKER_BUILDKIT=1` support, i.e. 19.03+
