@@ -1,0 +1,37 @@
+# https://github.com/vim/vim/
+
+# base image
+FROM alpine:latest as build
+
+# install requirements
+RUN apk add --no-cache gnupg build-base linux-headers curl jq tar xz # common base
+RUN apk add --no-cache ncurses-static
+
+# download and verify the latest sources
+WORKDIR /download
+RUN curl -H "accept: application/vnd.github.v3+json" \
+  "https://api.github.com/repos/vim/vim/tags" \
+  | jq -r .[].tarball_url \
+  | sort -rV | head -1 \
+  | xargs wget -O latest.tar.gz
+
+# extract sources
+WORKDIR /build
+RUN tar xf /download/*.tar.gz --strip-components=1
+
+# compile binaries
+ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
+ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+RUN cd src/ \
+  && ./configure --prefix=/usr --with-tlib=ncursesw \
+  && make -j$(nproc) \
+  && (ldd vim && exit 1 || true)
+
+# copy sources to new stage
+FROM scratch as sources
+COPY --from=build /download /
+COPY vim /Dockerfile
+
+# copy binaries to new stage
+FROM scratch as binary
+COPY --from=build /build/src/vim /

@@ -39,6 +39,7 @@ Available build targets are given by the Dockerfiles in [`build/`](build/):
 * `make zstd`
 * `make busybox`
 * `make curl`
+* `make vim`
 
 Some of the scripts use GPG signatures for which the trusted signing keys are stored
 in `build/*.keys` files and are imported before checking the downloaded sources.
