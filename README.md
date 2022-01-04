@@ -1,5 +1,7 @@
 # STATIC TOOLBOX
 
+[![compile release](https://github.com/ansemjo/static-toolbox/actions/workflows/compile.yml/badge.svg)](https://github.com/ansemjo/static-toolbox/actions/workflows/compile.yml)
+
 Dockerfile based build scripts to compile various static binaries of useful tools.
 
 I often found myself in shells where I needed a newer version of a particular tool,
@@ -20,8 +22,8 @@ provide any specific build environment – besides an installation of Docker.
 
 The binaries are compiled in a GitHub workflow regularly. These precompiled binaries
 and all the downloaded sources that were used can be found in the
-[action artifacts](https://github.com/ansemjo/static-toolbox/actions)
-(click on a run and download the `binaries-and-sources` archive form the artifacts).
+[action artifacts](https://github.com/ansemjo/static-toolbox/actions/workflows/compile.yml):
+click on a run and download the corresponding archive form the build artifacts.
 
 ## REQUIREMENTS
 
@@ -32,14 +34,15 @@ and all the downloaded sources that were used can be found in the
 
 Available build targets are given by the Dockerfiles in [`build/`](build/):
 
-* `make fdisk`
-* `make gpg`
-* `make git`
-* `make make`
-* `make zstd`
 * `make busybox`
 * `make curl`
+* `make fdisk`
+* `make git`
+* `make gpg`
+* `make make`
+* `make rsync`
 * `make vim`
+* `make zstd`
 
 Some of the scripts use GPG signatures for which the trusted signing keys are stored
 in `build/*.keys` files and are imported before checking the downloaded sources.
