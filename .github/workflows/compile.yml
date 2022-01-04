@@ -9,20 +9,36 @@ on:
 jobs:
   
   build:
-    name: compile
     runs-on: ubuntu-latest
+    strategy:
+      
+      matrix:
+        bin:
+          - busybox
+          - curl
+          - fdisk
+          - git
+          - gpg
+          - make
+          - rsync
+          - vim
+          - zstd
+    
     steps:
 
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Compile release
-        run: bash release.sh
+      - name: Compile static binary
+        run: |
+          rm -rf compiled/
+          make ${{ matrix.bin }}
+          make ${{ matrix.bin }}-sources
 
       - name: Upload job artifact
         uses: actions/upload-artifact@v2
         if: github.ref == 'refs/heads/main'
         with:
-          name: binaries-and-sources
+          name: ${{ matrix.bin }}
           path: compiled/*
           retention-days: 60
