@@ -20,10 +20,18 @@ WORKDIR /download
 ENV MIRROR="https://mirrors.edge.kernel.org/pub"
 RUN curl -s "$MIRROR/linux/utils/util-linux/" \
   | sed -n 's/.*href="v\([0-9.]\+\)\/".*/\1/p' \
-  | sort -rV | head -1 > VERSION \
+  | sort -rV | while read MAJOR; do \
+    echo "$MAJOR" > MAJOR; \
+    curl -s "$MIRROR/linux/utils/util-linux/v$MAJOR/" \
+    | sed -n 's/.*href="util-linux-\([0-9.]\+\)\.tar\.xz".*/\1/p' \
+    | sort -rV | head -1 > VERSION; \
+    export VERSION=$(cat VERSION); \
+    if test -n "$VERSION"; then break; fi; \
+  done \
   && export VERSION=$(cat VERSION) \
-  && wget "$MIRROR/linux/utils/util-linux/v$VERSION/util-linux-$VERSION.tar.xz" \
-  && wget "$MIRROR/linux/utils/util-linux/v$VERSION/util-linux-$VERSION.tar.sign" \
+  && export MAJOR=$(cat MAJOR) \
+  && wget "$MIRROR/linux/utils/util-linux/v$MAJOR/util-linux-$VERSION.tar.xz" \
+  && wget "$MIRROR/linux/utils/util-linux/v$MAJOR/util-linux-$VERSION.tar.sign" \
   && xz -dc *.tar.xz | gpg --verify *.sign -
 
 # extract sources
