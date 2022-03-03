@@ -33,7 +33,9 @@ jobs:
       - name: Compile static binary
         run: |
           rm -rf compiled/
-          make ${{ matrix.bin }}
+          make ${{ matrix.bin }} || \
+            (echo "=== RETRY 1 ==="; make ${{ matrix.bin }} ) || \
+            (echo "=== RETRY 2 ==="; make ${{ matrix.bin }} )
           make ${{ matrix.bin }}-sources
 
       - name: Upload job artifact
