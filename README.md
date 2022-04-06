@@ -40,6 +40,7 @@ Available build targets are given by the Dockerfiles in [`build/`](build/):
 * `make git`
 * `make gpg`
 * `make make`
+* `make openssl`
 * `make rsync`
 * `make vim`
 * `make zstd`

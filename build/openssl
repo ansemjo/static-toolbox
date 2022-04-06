@@ -1,0 +1,51 @@
+# openssl - TODO
+
+# base image
+FROM alpine:latest as build
+
+# install requirements
+RUN apk add --no-cache gnupg build-base linux-headers curl jq tar xz # common base
+RUN apk add --no-cache perl
+
+# import gpg keys and trust them
+COPY openssl.keys /gpgkeys
+RUN gpg --import </gpgkeys && printf '%s:6:\n' \
+  8657ABB260F056B1E5190839D9C4D26D0E604491 \
+  | gpg --import-ownertrust
+
+# download and verify latest sources
+WORKDIR /download
+ENV MIRROR="https://www.openssl.org/source/"
+RUN curl -s "$MIRROR" \
+  | sed -n 's/.*href="openssl-\(3\.[0-9]\+\.[0-9]\+\)\.tar\.gz".*/\1/p' \
+  | head -1 > VERSION \
+  && export VERSION=$(cat VERSION) \
+  && wget "$MIRROR/openssl-$VERSION.tar.gz" \
+  && wget "$MIRROR/openssl-$VERSION.tar.gz.asc" \
+  && gpg --verify *.asc
+
+# extract sources
+WORKDIR /build
+RUN tar xf /download/*.tar.gz --strip-components=1
+
+# compile binaries
+ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s" 
+ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
+RUN ./Configure \
+    --prefix=/usr --openssldir=/etc/ssl \
+    no-tests no-unit-test no-md4 no-whirlpool no-rmd160 \
+    no-bf no-rc2 no-rc4 no-rc5 no-sm2 no-sm3 no-sm4 \
+    no-weak-ssl-ciphers no-dtls \
+    no-ssl2 no-ssl3 no-tls1 no-tls1_1 \
+    no-ssl3-method no-tls1-method no-tls1_1-method \
+  && make -j$(nproc) \
+  && (ldd apps/openssl && exit 1 || true)
+
+# copy sources to new stage
+FROM scratch as sources
+COPY --from=build /download /
+COPY openssl /Dockerfile
+
+# copy binaries to new stage
+FROM scratch as binary
+COPY --from=build /build/apps/openssl /
