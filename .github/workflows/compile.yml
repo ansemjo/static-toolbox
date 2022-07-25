@@ -21,7 +21,9 @@ jobs:
           - git
           - gpg
           - make
+          - openssl
           - rsync
+          - squashfs
           - vim
           - zstd
     
