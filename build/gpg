@@ -49,7 +49,7 @@ WORKDIR /build
 RUN for t in /download/*.tar.*; do tar xf "$t"; done
 
 # insert compilation helper
-RUN printf $'#/usr/bin/env ash\n\
+RUN printf $'#!/usr/bin/env ash\n\
 package=$1; shift 1;\n\
 (cd "$package"* && { if [[ -f configure ]]; then ./configure $@; else true; fi; } && make -j$(nproc) && make install)\n\
 ' > /usr/bin/compile && chmod +x /usr/bin/compile
