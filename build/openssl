@@ -11,6 +11,7 @@ RUN apk add --no-cache perl
 COPY openssl.keys /gpgkeys
 RUN gpg --import </gpgkeys && printf '%s:6:\n' \
   8657ABB260F056B1E5190839D9C4D26D0E604491 \
+  7953AC1FBC3DC8B3B292393ED5E9E43F7DF9EE8C \
   | gpg --import-ownertrust
 
 # download and verify latest sources
