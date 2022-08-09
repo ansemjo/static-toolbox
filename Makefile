@@ -24,7 +24,6 @@ $(TARGETS):
 	make compiled/$@
 
 # use docker with buildkit to build artifacts
-.PHONY: build-%
 compiled/%: build/% compiled/
 	DOCKER_BUILDKIT=1 docker build -f $< build/ $(BUILDARGS) \
 		-o type=local,dest=compiled/ --target binary
