@@ -1,10 +1,7 @@
-name: compile release
+name: cross-compile all targets for all platforms
 
-on:
-  push:
-    branches: [ main, devel ]
-  schedule:
-    - cron: "32 14 3,17 * *"
+# only manual trigger
+on: workflow_dispatch
 
 jobs:
   
@@ -25,26 +22,37 @@ jobs:
           - squashfs
           - vim
           - zstd
+        platform: # sed -n 's/^* `\([a-z0-9-]\+\)`$/- \1/p' README.md
+          - linux-amd64
+          - linux-arm64
+          - linux-armv7
+          - linux-armv6
+          - linux-riscv64
+          - linux-s390x
+          - linux-386
 
     steps:
 
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
       - name: Compile static binaries for target
         run: |
           make clean
-          make ${{ matrix.target }} || \
-            (echo "=== RETRY 1 ==="; make ${{ matrix.target }} ) || \
-            (echo "=== RETRY 2 ==="; make ${{ matrix.target }} )
-          rm -f compiled/native
+          make compiled/${{ matrix.platform }}/${{ matrix.target }}/
           make sources/${{ matrix.target }}.tar
 
       - name: Upload job artifact
         uses: actions/upload-artifact@v3
         if: github.ref == 'refs/heads/main'
         with:
-          name: ${{ matrix.target }}
+          name: ${{ matrix.target }}-${{ matrix.platform }}
           path: |
             compiled/*
             sources/*
