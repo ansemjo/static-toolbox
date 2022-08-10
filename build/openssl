@@ -1,7 +1,9 @@
-# openssl - TODO
+# openssl - a robust, commercial-grade, full-featured toolkit for
+# general-purpose cryptography and secure communication.
+# https://www.openssl.org/
 
 # base image
-FROM alpine:latest as build
+FROM alpine:edge as build
 
 # install requirements
 RUN apk add --no-cache gnupg build-base linux-headers curl jq tar xz # common base

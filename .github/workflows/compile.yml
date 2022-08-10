@@ -2,7 +2,7 @@ name: compile release
 
 on:
   push:
-    branches: [ main,  devel ]
+    branches: [ main, devel ]
   schedule:
     - cron: "32 14 3,17 * *"
 
@@ -14,7 +14,7 @@ jobs:
       
       fail-fast: false
       matrix:
-        bin:
+        target: # find -L build/ -type f ! -name '*.keys' -printf '%f\n' | sort
           - busybox
           - curl
           - fdisk
@@ -32,18 +32,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Compile static binary
+      - name: Compile static binaries for target
         run: |
-          rm -rf compiled/
-          make ${{ matrix.bin }} || \
-            (echo "=== RETRY 1 ==="; make ${{ matrix.bin }} ) || \
-            (echo "=== RETRY 2 ==="; make ${{ matrix.bin }} )
-          make ${{ matrix.bin }}-sources
+          make clean
+          make ${{ matrix.target }} || \
+            (echo "=== RETRY 1 ==="; make ${{ matrix.target }} ) || \
+            (echo "=== RETRY 2 ==="; make ${{ matrix.target }} )
+          make sources/${{ matrix.target }}.tar
 
       - name: Upload job artifact
         uses: actions/upload-artifact@v3
         if: github.ref == 'refs/heads/main'
         with:
-          name: ${{ matrix.bin }}
-          path: compiled/*
+          name: ${{ matrix.target }}
+          path: |
+            compiled/native/${{ matrix.target }}/
+            sources/${{ matrix.target }}.tar
           retention-days: 60

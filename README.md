@@ -16,8 +16,8 @@ The binaries are compiled in a GitHub workflow regularly. These precompiled bina
 
 ## REQUIREMENTS
 
-* Docker with `DOCKER_BUILDKIT=1` support, i.e. 19.03+
-* GNU `make`, `find`
+* Docker with `buildkit` support / `buildx` plugin, i.e. at least 19.03
+* `make`, `find`, `sed`
 
 ## USAGE
 
@@ -34,35 +34,39 @@ Available build targets are given by the Dockerfiles in [`build/`](build/):
 * `make vim`
 * `make zstd`
 
+The output will be placed in `compiled/` in a subdirectory matching your native platform.
+
 Some of the scripts use GPG signatures for which the trusted signing keys are stored in `build/*.keys` files and are imported before checking the downloaded sources.
 
 ### OTHER PLATFORMS
 
-First, [setup `buildx` for multi-platform building](https://docs.docker.com/build/buildx/multiplatform-images/). Let's assume you already ran `docker buildx create --use ...` etc. and your currently used build server is multi-platform capable. In modern versions of Docker this should make the `--platform` argument available to normal `docker build` invocations, too.
+First, [setup `buildx` for multi-platform building](https://docs.docker.com/build/buildx/multiplatform-images/). Let's assume you already ran `docker buildx create --use ...` etc. and your currently used build server is multi-platform capable. Then you should be able to use the `--platform` argument with `docker build` invocations, too.
 
-To build `fdisk` for `linux/arm64` you'd use the `BUILDARGS` variable with make:
-
-```bash
-make fdisk BUILDARGS="--platform linux/arm64"
-```
-
-The command that gets executed is this:
+The Makefile contains targets for most available platforms. In order to build `fdisk` for `linux/arm64` you'd use the `compiled/linux-arm64/fdisk/` target:
 
 ```bash
-DOCKER_BUILDKIT=1 docker build -f build/fdisk build/ \
-  --platform linux/arm64 \
-  -o type=local,dest=compiled/ --target binary
+make compiled/linux-arm64/fdisk/
 ```
 
-Change the `dest=..` directory if you like and repeat this for every platform you want to build for. I haven't tested all combinations yet, though, because it takes a *very long time* under emulation. Available platforms are:
+I haven't actually tested all combinations yet, because it takes a *very long time* under emulation. Available target platforms are:
 
-* `linux/amd64`
-* `linux/arm64`
-* `linux/riscv64`
-* `linux/s390x`
-* `linux/386`
-* `linux/arm/v7`
-* `linux/arm/v6`
+* `linux-amd64`
+* `linux-arm64`
+* `linux-armv7`
+* `linux-armv6`
+* `linux-riscv64`
+* `linux-s390x`
+* `linux-386`
+
+### MANUAL BUILDS
+
+If you want to add some other arguments to `docker build` or want to create your own script, this is the command the gets executed in the example above:
+
+```bash
+DOCKER_BUILDKIT=1 docker build -f build/fdisk build/
+  --target binary -o type=local,dest=compiled/linux-arm64/fdisk/ \
+  --platform linux/arm64
+```
 
 ## ADD YOUR OWN
 
@@ -71,4 +75,4 @@ Add your own build scripts in `build/`:
 - add a Dockerfile named like the binary you want to compile
 - use seperate `RUN` commands for better caching of steps
 - the `build/` directory will be the context, so you may add scripts and `COPY` them
-- use a final `FROM scratch` stage and only copy the output binary into this rootfs
+- use a final `FROM scratch AS binary` stage and only copy the output binary into this rootfs

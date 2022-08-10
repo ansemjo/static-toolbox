@@ -11,7 +11,7 @@
 # ---- USED AS LIBRARY DEPENDENCY HERE ----
 # TODO: use a preprocessor to paste zstd dockerfile here?
 # zstd - a fast lossless compresiion algorithm and data compression tool
-FROM alpine:latest as zstd
+FROM alpine:edge as zstd
 
 # install requirements
 RUN apk add --no-cache gnupg build-base linux-headers curl jq tar xz # common base
@@ -38,7 +38,7 @@ RUN make -C lib/ -j$(nproc) install install-static
 # ---- USED AS LIBRARY DEPENDENCY HERE ----
 
 # base image
-FROM alpine:latest as build
+FROM alpine:edge as build
 
 # install requirements
 RUN apk add --no-cache gnupg build-base linux-headers curl jq tar xz # common base

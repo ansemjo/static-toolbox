@@ -4,7 +4,7 @@
 # https://git-scm.com/
 
 # base image
-FROM debian:bullseye as build
+FROM debian:unstable as build
 
 # install requirements
 RUN apt-get update && apt-get install -y build-essential \
