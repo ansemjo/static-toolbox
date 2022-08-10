@@ -20,8 +20,6 @@ all: $(addprefix compiled/,$(TARGETS))
 
 # build a single target
 $(TARGETS):
-	mkdir -p compiled/
-	ln -s $(NATIVE) compiled/native
 	make compiled/$(NATIVE)/$@/
 
 # generate all available targets for all platforms for autocompletion
