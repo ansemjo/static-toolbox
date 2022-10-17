@@ -78,6 +78,7 @@ RUN compile gnupg \
   --enable-large-secmem \
   --enable-tofu \
   --disable-photo-viewers \
+  --disable-ldap \
   --disable-gpg-idea \
   --disable-gpg-cast5 \
   --disable-gpg-blowfish \
