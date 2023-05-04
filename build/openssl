@@ -6,7 +6,7 @@
 FROM alpine:edge as build
 
 # install requirements
-RUN apk add --no-cache gnupg build-base linux-headers curl jq tar xz # common base
+RUN apk add --no-cache gnupg gnupg-keyboxd build-base linux-headers curl jq tar xz # common base
 RUN apk add --no-cache perl
 
 # import gpg keys and trust them
