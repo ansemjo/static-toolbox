@@ -1,8 +1,16 @@
 # generate target list from available dockerfiles
-TARGETS = $(shell find -L build/ -type f ! -name '*.keys' -printf '%f\n')
+TARGETS = $(shell find -L build/ -type f ! -name '*.keys' -printf '%f\n' | sort)
+.PHONY: list-targets
+list-targets:
+	@echo "Available targets:" >&2
+	@echo $(TARGETS)
 
 # generate list of available platforms
 PLATFORMS = $(addprefix linux-,386 amd64 arm64 armv6 armv7 riscv64 s390x)
+.PHONY: list-platforms
+list-platforms:
+	@echo "Available platforms:" >&2
+	@echo $(PLATFORMS)
 
 # get the native docker server platform
 NATIVE = $(shell docker version -f "{{ .Server.Os }}/{{ .Server.Arch }}" | sed 's:/:-:g')
@@ -10,7 +18,7 @@ NATIVE = $(shell docker version -f "{{ .Server.Os }}/{{ .Server.Arch }}" | sed '
 # clean up compiled targets
 .PHONY: clean
 clean:
-	rm -fv compiled/ sources/
+	rm -rfv compiled/ sources/
 
 # ---------- BINARIES ---------- #
 
