@@ -22,7 +22,8 @@ jobs:
         id: listing
         run: |
           make list-targets \
-          | jq -Rsc 'split(" ")[:-1]' \
+          | tr -d '\n' \
+          | jq -Rsc 'split(" ")' \
           | sed 's:^:targets=:' >> $GITHUB_OUTPUT
 
   # compile binaries for available targets listed above
