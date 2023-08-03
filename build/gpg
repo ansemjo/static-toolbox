@@ -74,6 +74,7 @@ RUN compile gnupg \
   --localstatedir=/var \
   --disable-gpgsm \
   --disable-scdaemon \
+  --disable-dirmngr \
   --enable-symcryptrun \
   --enable-large-secmem \
   --enable-tofu \
