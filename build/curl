@@ -1,6 +1,6 @@
 # curl - commandline tool to transfer data with URL syntax
-# Supports HTTP, HTTPS, FTP, FTPS, GOPHER, TFTP, SCP, SFTP, SMB,
-# TELNET, DICT, LDAP, LDAPS, MQTT, FILE, IMAP, SMTP, POP3, RTSP and RTMP.
+# Supports dict file ftp ftps gopher gophers http https imap imaps
+# ipfs ipns mqtt pop3 pop3s rtsp scp sftp smb smbs smtp smtps telnet tftp
 # https://github.com/curl/curl
 
 # base image
@@ -8,7 +8,15 @@ FROM alpine:edge as build
 
 # install requirements
 RUN apk add --no-cache gnupg gnupg-keyboxd build-base linux-headers curl jq tar xz # common base
-RUN apk add --no-cache ca-certificates openssl-libs-static openssl-dev libpsl-static libpsl-dev
+RUN apk add --no-cache ca-certificates perl \
+  openssl-libs-static openssl-dev \
+  zlib-static zlib-dev \
+  brotli-static brotli-dev \
+  zstd-static zstd-dev \
+  nghttp2-dev nghttp2-static \
+  libssh2-dev libssh2-static \
+  libpsl-static libpsl-dev \
+  libidn2-static libidn2-dev idn2-utils
 
 # import gpg keys and trust them
 COPY curl.keys /gpgkeys
@@ -34,13 +42,20 @@ ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s"
 ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -static -s"
 ENV CPPFLAGS="-D_FORTIFY_SOURCE=2"
 ENV PKG_CONFIG="pkg-config --static"
-RUN ./configure \
-      --with-ssl \
+RUN ./configure --help && \
+    ./configure \
       --disable-shared \
       --enable-static \
+      --with-ssl \
+      --with-zlib \
+      --with-brotli \
+      --with-zstd \
+      --with-libssh2 \
+      --enable-ipv6 \
+      --enable-unix-sockets \
       --enable-manual \
-      --without-libssh2 \
-  && make -j$(nproc) LDFLAGS=-all-static \
+      --without-libpsl \
+  && make -j$(nproc) LDFLAGS="$LDFLAGS -all-static" \
   && (ldd src/curl && exit 1 || true)
 
 # copy sources to new stage
