@@ -16,7 +16,7 @@ jobs:
     steps:
 
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: list available make targets
         id: listing
@@ -38,7 +38,7 @@ jobs:
     steps:
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Compile static binaries for target
         run: |
@@ -50,7 +50,7 @@ jobs:
           make sources/${{ matrix.target }}.tar
 
       - name: Upload job artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: github.ref == 'refs/heads/main'
         with:
           name: ${{ matrix.target }}
