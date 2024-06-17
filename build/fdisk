@@ -43,11 +43,15 @@ ENV LDFLAGS="-Wl,-z,now -Wl,-z,relro -static -s"
 ENV CFLAGS="-fPIC -pie -fstack-protector-all -O2 -D_FORTIFY_SOURCE=2 -static -s"
 RUN ./configure \
       --enable-static \
-      --enable-static-programs=fdisk,sfdisk \
+      --enable-static-programs=fdisk,sfdisk,blkid,losetup,mount,umount,nsenter,unshare \
       --disable-pylibmount \
       --without-python \
       --disable-liblastlog2 \
-  && make -j$(nproc) fdisk.static sfdisk.static \
+  && make -j$(nproc) \
+    fdisk.static sfdisk.static \
+    blkid.static losetup.static \
+    mount.static umount.static \
+    nsenter.static unshare.static \
   && (ldd fdisk.static && exit 1 || true) \
   && (ldd sfdisk.static && exit 1 || true)
 
@@ -60,3 +64,9 @@ COPY fdisk /Dockerfile
 FROM scratch as binary
 COPY --from=build /build/fdisk.static /fdisk
 COPY --from=build /build/sfdisk.static /sfdisk
+COPY --from=build /build/blkid.static /blkid
+COPY --from=build /build/losetup.static /losetup
+COPY --from=build /build/mount.static /mount
+COPY --from=build /build/umount.static /umount
+COPY --from=build /build/nsenter.static /nsenter
+COPY --from=build /build/unshare.static /unshare

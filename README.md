@@ -25,7 +25,7 @@ Available build targets are given by the Dockerfiles in [`build/`](build/):
 
 * `make busybox`
 * `make curl`
-* `make fdisk`
+* `make fdisk` (includes `blkid`, `losetup`, `(u)mount`, `nsenter` & `unshare`)
 * `make git`
 * `make gpg`
 * `make make`
