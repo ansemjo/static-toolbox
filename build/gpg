@@ -4,6 +4,9 @@
 # the GnuPG FTP server. The download page lists the latest versions.
 # https://gnupg.org/download/index.html
 
+# WARNING: this build breaks so frequently that I just gave up on
+# maintaining it. It may or may not work. Here be dragons.
+
 # base image
 FROM alpine:edge as build
 
