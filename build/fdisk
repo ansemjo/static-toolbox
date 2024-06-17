@@ -46,6 +46,7 @@ RUN ./configure \
       --enable-static-programs=fdisk,sfdisk \
       --disable-pylibmount \
       --without-python \
+      --disable-liblastlog2 \
   && make -j$(nproc) fdisk.static sfdisk.static \
   && (ldd fdisk.static && exit 1 || true) \
   && (ldd sfdisk.static && exit 1 || true)
